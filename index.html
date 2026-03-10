@@ -9,69 +9,92 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #0b1320;
+      background: radial-gradient(circle at top, #12213d 0%, #08101d 45%, #04070d 100%);
       color: white;
+      overflow: hidden;
     }
 
     header {
       text-align: center;
-      padding: 20px;
-      background-color: #101b2d;
+      padding: 22px 20px 18px 20px;
+      background: rgba(10, 18, 32, 0.88);
+      border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.08);
+      position: relative;
+      z-index: 1000;
     }
 
     h1 {
       margin: 0;
-      font-size: 28px;
+      font-size: 30px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.35);
     }
 
     p {
       margin-top: 8px;
-      color: #cfd8e3;
+      color: #b9c8db;
+      font-size: 14px;
     }
 
     #infos {
       display: flex;
       justify-content: center;
-      gap: 20px;
-      padding: 15px;
-      background-color: #132238;
+      gap: 18px;
+      padding: 14px 16px;
+      background: rgba(8, 16, 29, 0.92);
       flex-wrap: wrap;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.12);
+      position: relative;
+      z-index: 1000;
     }
 
     .box {
-      background-color: rgba(255, 255, 255, 0.08);
-      padding: 12px 20px;
-      border-radius: 10px;
-      min-width: 160px;
+      background: linear-gradient(180deg, rgba(18, 34, 56, 0.95), rgba(10, 19, 32, 0.95));
+      border: 1px solid rgba(0, 255, 255, 0.12);
+      padding: 12px 22px;
+      border-radius: 14px;
+      min-width: 170px;
       text-align: center;
+      box-shadow: 0 0 16px rgba(0, 255, 255, 0.08);
     }
 
     .small {
-      font-size: 13px;
-      color: #cfd8e3;
+      font-size: 12px;
+      color: #8fa7c4;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .number {
       font-size: 24px;
       font-weight: bold;
-      margin-top: 5px;
+      margin-top: 6px;
+      color: #e9f7ff;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.18);
     }
 
     #map {
-      height: calc(100vh - 170px);
+      height: calc(100vh - 176px);
       width: 100%;
+      filter: brightness(0.9) saturate(1.1);
+    }
+
+    .leaflet-container {
+      background: #050b14;
     }
   </style>
 </head>
 <body>
   <header>
     <h1>Cyber Attack Map</h1>
-    <p>Petit projet perso pour visualiser des cyberattaques simulées sur une carte</p>
+    <p>Mini projet de visualisation de cyberattaques simulées en temps réel</p>
   </header>
 
   <div id="infos">
     <div class="box">
-      <div class="small">Nombre d'attaques</div>
+      <div class="small">Attacks</div>
       <div class="number" id="attackCount">0</div>
     </div>
 
@@ -81,7 +104,7 @@
     </div>
 
     <div class="box">
-      <div class="small">Cible</div>
+      <div class="small">Target</div>
       <div class="number" id="targetCountry">-</div>
     </div>
   </div>
@@ -92,8 +115,10 @@
   <script>
     var map = L.map('map').setView([20, 0], 2);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 20
     }).addTo(map);
 
     var attackCount = 0;
@@ -132,26 +157,31 @@
       }
 
       var sourceMarker = L.circleMarker(source.coords, {
-        radius: 6,
-        color: 'red',
-        fillColor: 'red',
-        fillOpacity: 1
+        radius: 7,
+        color: '#ff3b3b',
+        fillColor: '#ff3b3b',
+        fillOpacity: 1,
+        weight: 2
       }).addTo(map);
 
       var targetMarker = L.circleMarker(target.coords, {
-        radius: 6,
-        color: 'lime',
-        fillColor: 'lime',
-        fillOpacity: 1
+        radius: 7,
+        color: '#00ffe1',
+        fillColor: '#00ffe1',
+        fillOpacity: 1,
+        weight: 2
       }).addTo(map);
 
       var attackLine = L.polyline([source.coords, target.coords], {
-        color: 'orange',
-        weight: 2,
-        opacity: 0.8
+        color: '#00d9ff',
+        weight: 2.5,
+        opacity: 0.85
       }).addTo(map);
 
       updateInfos(source, target);
+
+      sourceMarker.bindPopup('Attack source: ' + source.name);
+      targetMarker.bindPopup('Target: ' + target.name);
 
       setTimeout(function () {
         map.removeLayer(sourceMarker);
