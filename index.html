@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Attack Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0b1320;
+      color: white;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px;
+      background-color: #101b2d;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    p {
+      margin-top: 8px;
+      color: #cfd8e3;
+    }
+
+    #infos {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 15px;
+      background-color: #132238;
+      flex-wrap: wrap;
+    }
+
+    .box {
+      background-color: rgba(255, 255, 255, 0.08);
+      padding: 12px 20px;
+      border-radius: 10px;
+      min-width: 160px;
+      text-align: center;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #cfd8e3;
+    }
+
+    .number {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    #map {
+      height: calc(100vh - 170px);
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cyber Attack Map</h1>
+    <p>Petit projet perso pour visualiser des cyberattaques simulées sur une carte</p>
+  </header>
+
+  <div id="infos">
+    <div class="box">
+      <div class="small">Nombre d'attaques</div>
+      <div class="number" id="attackCount">0</div>
+    </div>
+
+    <div class="box">
+      <div class="small">Source</div>
+      <div class="number" id="sourceCountry">-</div>
+    </div>
+
+    <div class="box">
+      <div class="small">Cible</div>
+      <div class="number" id="targetCountry">-</div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    var map = L.map('map').setView([20, 0], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var attackCount = 0;
+
+    var countries = [
+      { name: 'USA', coords: [37.0902, -95.7129] },
+      { name: 'France', coords: [46.2276, 2.2137] },
+      { name: 'Germany', coords: [51.1657, 10.4515] },
+      { name: 'Brazil', coords: [-14.2350, -51.9253] },
+      { name: 'India', coords: [20.5937, 78.9629] },
+      { name: 'Japan', coords: [36.2048, 138.2529] },
+      { name: 'Australia', coords: [-25.2744, 133.7751] },
+      { name: 'Canada', coords: [56.1304, -106.3468] },
+      { name: 'UK', coords: [55.3781, -3.4360] },
+      { name: 'South Korea', coords: [35.9078, 127.7669] }
+    ];
+
+    function randomCountry() {
+      var index = Math.floor(Math.random() * countries.length);
+      return countries[index];
+    }
+
+    function updateInfos(source, target) {
+      attackCount = attackCount + 1;
+      document.getElementById('attackCount').textContent = attackCount;
+      document.getElementById('sourceCountry').textContent = source.name;
+      document.getElementById('targetCountry').textContent = target.name;
+    }
+
+    function createAttack() {
+      var source = randomCountry();
+      var target = randomCountry();
+
+      while (source.name === target.name) {
+        target = randomCountry();
+      }
+
+      var sourceMarker = L.circleMarker(source.coords, {
+        radius: 6,
+        color: 'red',
+        fillColor: 'red',
+        fillOpacity: 1
+      }).addTo(map);
+
+      var targetMarker = L.circleMarker(target.coords, {
+        radius: 6,
+        color: 'lime',
+        fillColor: 'lime',
+        fillOpacity: 1
+      }).addTo(map);
+
+      var attackLine = L.polyline([source.coords, target.coords], {
+        color: 'orange',
+        weight: 2,
+        opacity: 0.8
+      }).addTo(map);
+
+      updateInfos(source, target);
+
+      setTimeout(function () {
+        map.removeLayer(sourceMarker);
+        map.removeLayer(targetMarker);
+        map.removeLayer(attackLine);
+      }, 2000);
+    }
+
+    setInterval(createAttack, 1200);
+  </script>
+</body>
+</html>
