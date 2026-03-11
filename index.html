@@ -97,7 +97,7 @@
     }
 
     #leftPanel, #rightPanel {
-      width: 300px;
+      width: 320px;
       background: #0c1726;
       border-right: 1px solid rgba(255,255,255,0.06);
       overflow-y: auto;
@@ -129,7 +129,7 @@
       line-height: 1.5;
     }
 
-    .attack-item, .country-item {
+    .attack-item, .country-item, .stat-box {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.04);
       border-radius: 10px;
@@ -149,9 +149,9 @@
     }
 
     .country-item.active-country {
-      border-color: rgba(121,247,255,0.45);
-      background: rgba(121,247,255,0.08);
-      box-shadow: 0 0 0 1px rgba(121,247,255,0.15) inset;
+      border-color: rgba(121,247,255,0.48);
+      background: rgba(121,247,255,0.10);
+      box-shadow: 0 0 0 1px rgba(121,247,255,0.15) inset, 0 0 18px rgba(121,247,255,0.08);
     }
 
     .attack-route {
@@ -199,6 +199,28 @@
       text-align: right;
     }
 
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #8fa2b7;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-value {
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+
     .leaflet-container {
       background: #aad3df;
     }
@@ -208,18 +230,9 @@
     }
 
     @keyframes pulse {
-      0% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      50% {
-        transform: scale(1.3);
-        opacity: 0.7;
-      }
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     @media (max-width: 1100px) {
@@ -275,20 +288,39 @@
 
   <div id="mainLayout">
     <div id="leftPanel">
-      <div class="panel-title">Recent Attacks</div>
+      <div class="panel-title">Country Details</div>
       <div class="panel-subtitle">
-        Dernières attaques simulées observées en temps réel.
+        Clique sur un pays pour afficher toutes ses statistiques et ses attaques récentes.
       </div>
 
       <div id="selectedCountryBox" class="attack-item" style="display:none;">
-        <div class="panel-title" style="font-size:18px; margin-bottom:8px;">Country Details</div>
-        <div id="selectedCountryName" class="attack-route"></div>
-        <div id="selectedCountryStats" class="attack-time" style="margin-bottom:10px;"></div>
+        <div id="selectedCountryName" class="attack-route" style="font-size:20px;"></div>
         <div id="selectedCountryCity" class="attack-type"></div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Incoming</div>
+            <div class="stat-value" id="statIncoming">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Outgoing</div>
+            <div class="stat-value" id="statOutgoing">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Total related</div>
+            <div class="stat-value" id="statTotal">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Most used type</div>
+            <div class="stat-value" id="statTopType" style="font-size:16px;">-</div>
+          </div>
+        </div>
+
+        <div class="panel-title" style="font-size:18px; margin-top:8px; margin-bottom:10px;">Recent cases</div>
         <div id="selectedCountryCases"></div>
       </div>
 
-      <div id="recentAttacks"></div>
+      <div id="emptyDetails" class="attack-time">Sélectionne un pays dans la colonne de droite ou sur la carte.</div>
     </div>
 
     <div id="map"></div>
@@ -296,7 +328,7 @@
     <div id="rightPanel">
       <div class="panel-title">Top Targeted Countries</div>
       <div class="panel-subtitle">
-        Clique sur un pays pour afficher ses cas récents dans la simulation.
+        Clique sur un pays pour le surligner et afficher tous les détails liés aux attaques.
       </div>
       <div id="topCountries"></div>
     </div>
@@ -321,7 +353,7 @@
     var attackCount = 0;
 
     var locations = [
-      { country: 'United States', city: 'New York', coords: [40.7128, -74.0060] },
+      { country: 'United States', city: 'Washington', coords: [38.9072, -77.0369] },
       { country: 'France', city: 'Paris', coords: [48.8566, 2.3522] },
       { country: 'Germany', city: 'Berlin', coords: [52.5200, 13.4050] },
       { country: 'United Kingdom', city: 'London', coords: [51.5074, -0.1278] },
@@ -331,52 +363,54 @@
       { country: 'China', city: 'Beijing', coords: [39.9042, 116.4074] },
       { country: 'Japan', city: 'Tokyo', coords: [35.6762, 139.6503] },
       { country: 'South Korea', city: 'Seoul', coords: [37.5665, 126.9780] },
-      { country: 'India', city: 'Delhi', coords: [28.7041, 77.1025] },
-      { country: 'United Arab Emirates', city: 'Dubai', coords: [25.2048, 55.2708] },
+      { country: 'India', city: 'New Delhi', coords: [28.6139, 77.2090] },
+      { country: 'United Arab Emirates', city: 'Abu Dhabi', coords: [24.4539, 54.3773] },
       { country: 'Saudi Arabia', city: 'Riyadh', coords: [24.7136, 46.6753] },
       { country: 'Singapore', city: 'Singapore', coords: [1.3521, 103.8198] },
-      { country: 'Australia', city: 'Sydney', coords: [-33.8688, 151.2093] },
-      { country: 'Canada', city: 'Toronto', coords: [43.65107, -79.347015] },
-      { country: 'Brazil', city: 'São Paulo', coords: [-23.5505, -46.6333] },
+      { country: 'Australia', city: 'Canberra', coords: [-35.2809, 149.1300] },
+      { country: 'Canada', city: 'Ottawa', coords: [45.4215, -75.6972] },
+      { country: 'Brazil', city: 'Brasília', coords: [-15.7939, -47.8828] },
       { country: 'Mexico', city: 'Mexico City', coords: [19.4326, -99.1332] },
-      { country: 'South Africa', city: 'Cape Town', coords: [-33.9249, 18.4241] },
-      { country: 'Turkey', city: 'Istanbul', coords: [41.0082, 28.9784] },
+      { country: 'South Africa', city: 'Pretoria', coords: [-25.7479, 28.2293] },
+      { country: 'Turkey', city: 'Ankara', coords: [39.9334, 32.8597] },
       { country: 'Netherlands', city: 'Amsterdam', coords: [52.3676, 4.9041] },
       { country: 'Sweden', city: 'Stockholm', coords: [59.3293, 18.0686] },
       { country: 'Argentina', city: 'Buenos Aires', coords: [-34.6037, -58.3816] },
       { country: 'Indonesia', city: 'Jakarta', coords: [-6.2088, 106.8456] },
-      { country: 'Nigeria', city: 'Lagos', coords: [6.5244, 3.3792] }
+      { country: 'Nigeria', city: 'Abuja', coords: [9.0765, 7.3986] },
+      { country: 'Egypt', city: 'Cairo', coords: [30.0444, 31.2357] },
+      { country: 'Morocco', city: 'Rabat', coords: [34.0209, -6.8416] },
+      { country: 'Algeria', city: 'Algiers', coords: [36.7538, 3.0588] },
+      { country: 'Norway', city: 'Oslo', coords: [59.9139, 10.7522] },
+      { country: 'Finland', city: 'Helsinki', coords: [60.1699, 24.9384] },
+      { country: 'Poland', city: 'Warsaw', coords: [52.2297, 21.0122] },
+      { country: 'Ukraine', city: 'Kyiv', coords: [50.4501, 30.5234] },
+      { country: 'Portugal', city: 'Lisbon', coords: [38.7223, -9.1393] },
+      { country: 'Greece', city: 'Athens', coords: [37.9838, 23.7275] },
+      { country: 'Pakistan', city: 'Islamabad', coords: [33.6844, 73.0479] },
+      { country: 'Thailand', city: 'Bangkok', coords: [13.7563, 100.5018] },
+      { country: 'Vietnam', city: 'Hanoi', coords: [21.0278, 105.8342] }
     ];
 
-    var attackTypes = [
-      'DDoS',
-      'Malware',
-      'Phishing',
-      'Brute Force',
-      'Ransomware',
-      'Credential Stuffing'
-    ];
-
+    var attackTypes = ['DDoS', 'Malware', 'Phishing', 'Brute Force', 'Ransomware', 'Credential Stuffing'];
     var recentAttacks = [];
     var targetedCountries = {};
     var incomingByCountry = {};
     var outgoingByCountry = {};
     var countryMarkers = {};
     var selectedCountry = null;
+    var selectedMarker = null;
 
     function randomLocation() {
-      var index = Math.floor(Math.random() * locations.length);
-      return locations[index];
+      return locations[Math.floor(Math.random() * locations.length)];
     }
 
     function randomAttackType() {
-      var index = Math.floor(Math.random() * attackTypes.length);
-      return attackTypes[index];
+      return attackTypes[Math.floor(Math.random() * attackTypes.length)];
     }
 
     function currentTime() {
-      var now = new Date();
-      return now.toLocaleTimeString();
+      return new Date().toLocaleTimeString();
     }
 
     function updateTopBar(source, target, type) {
@@ -385,6 +419,29 @@
       document.getElementById('sourceCountry').textContent = source.country + ' (' + source.city + ')';
       document.getElementById('targetCountry').textContent = target.country + ' (' + target.city + ')';
       document.getElementById('attackType').textContent = type;
+    }
+
+    function getTopTypeForCountry(countryName) {
+      var types = {};
+      for (var i = 0; i < recentAttacks.length; i++) {
+        var item = recentAttacks[i];
+        if (item.sourceCountry === countryName || item.targetCountry === countryName) {
+          if (!types[item.type]) {
+            types[item.type] = 0;
+          }
+          types[item.type] = types[item.type] + 1;
+        }
+      }
+
+      var bestType = '-';
+      var bestCount = 0;
+      for (var typeName in types) {
+        if (types[typeName] > bestCount) {
+          bestCount = types[typeName];
+          bestType = typeName;
+        }
+      }
+      return bestType;
     }
 
     function updateRecentAttacks(source, target, type) {
@@ -399,87 +456,40 @@
         time: currentTime()
       });
 
-      if (recentAttacks.length > 10) {
+      if (recentAttacks.length > 18) {
         recentAttacks.pop();
-      }
-
-      var container = document.getElementById('recentAttacks');
-      container.innerHTML = '';
-
-      for (var i = 0; i < recentAttacks.length; i++) {
-        var item = recentAttacks[i];
-        var div = document.createElement('div');
-        div.className = 'attack-item';
-        div.innerHTML =
-          "<div class='attack-route'>" + item.source + ' → ' + item.target + '</div>' +
-          "<div class='attack-type'>" + item.type + '</div>' +
-          "<div class='attack-time'>" + item.time + '</div>';
-        container.appendChild(div);
       }
     }
 
-    function showCountryDetails(countryName) {
-      selectedCountry = countryName;
-
-      var infoBox = document.getElementById('selectedCountryBox');
-      var nameBox = document.getElementById('selectedCountryName');
-      var statsBox = document.getElementById('selectedCountryStats');
-      var cityBox = document.getElementById('selectedCountryCity');
-      var casesBox = document.getElementById('selectedCountryCases');
-
-      var location = null;
-      for (var i = 0; i < locations.length; i++) {
-        if (locations[i].country === countryName) {
-          location = locations[i];
-          break;
-        }
+    function resetMarkerStyle() {
+      if (selectedMarker) {
+        selectedMarker.setStyle({
+          radius: 4,
+          color: '#7a8da6',
+          fillColor: '#7a8da6',
+          fillOpacity: 0.9,
+          weight: 1
+        });
       }
-
-      var incoming = incomingByCountry[countryName] || 0;
-      var outgoing = outgoingByCountry[countryName] || 0;
-
-      nameBox.textContent = countryName;
-      statsBox.textContent = 'Incoming: ' + incoming + ' | Outgoing: ' + outgoing;
-      cityBox.textContent = location ? ('Main city: ' + location.city) : 'Main city: -';
-
-      var related = [];
-      for (var j = 0; j < recentAttacks.length; j++) {
-        var item = recentAttacks[j];
-        if (item.sourceCountry === countryName || item.targetCountry === countryName) {
-          related.push(item);
-        }
-      }
-
-      casesBox.innerHTML = '';
-      if (related.length === 0) {
-        casesBox.innerHTML = "<div class='attack-time'>No recent case for this country yet.</div>";
-      } else {
-        for (var k = 0; k < related.length && k < 5; k++) {
-          var caseItem = document.createElement('div');
-          caseItem.className = 'attack-item';
-          caseItem.style.marginTop = '8px';
-          caseItem.style.marginBottom = '0';
-          caseItem.innerHTML =
-            "<div class='attack-route'>" + related[k].source + ' → ' + related[k].target + '</div>' +
-            "<div class='attack-type'>" + related[k].type + '</div>' +
-            "<div class='attack-time'>" + related[k].time + '</div>';
-          casesBox.appendChild(caseItem);
-        }
-      }
-
-      infoBox.style.display = 'block';
-      updateTopCountries();
     }
 
     function highlightCountryMarker(countryName) {
       if (countryMarkers[countryName]) {
-        var marker = countryMarkers[countryName];
-        map.setView(marker.getLatLng(), 3);
-        marker.openPopup();
+        resetMarkerStyle();
+        selectedMarker = countryMarkers[countryName];
+        selectedMarker.setStyle({
+          radius: 7,
+          color: '#4d596b',
+          fillColor: '#4d596b',
+          fillOpacity: 1,
+          weight: 2
+        });
+        map.setView(selectedMarker.getLatLng(), 3);
+        selectedMarker.openPopup();
       }
     }
 
-    function updateTopCountries() {
+    function renderTopCountries() {
       var sortable = [];
       for (var country in targetedCountries) {
         sortable.push([country, targetedCountries[country]]);
@@ -493,7 +503,7 @@
       var container = document.getElementById('topCountries');
       container.innerHTML = '';
 
-      for (var i = 0; i < sortable.length && i < 6; i++) {
+      for (var i = 0; i < sortable.length && i < 10; i++) {
         var countryName = sortable[i][0];
         var count = sortable[i][1];
         var width = (count / maxValue) * 100;
@@ -508,12 +518,65 @@
         div.onclick = (function(name) {
           return function() {
             showCountryDetails(name);
-            highlightCountryMarker(name);
           };
         })(countryName);
 
         container.appendChild(div);
       }
+    }
+
+    function showCountryDetails(countryName) {
+      selectedCountry = countryName;
+
+      var location = null;
+      for (var i = 0; i < locations.length; i++) {
+        if (locations[i].country === countryName) {
+          location = locations[i];
+          break;
+        }
+      }
+
+      var incoming = incomingByCountry[countryName] || 0;
+      var outgoing = outgoingByCountry[countryName] || 0;
+      var related = [];
+
+      for (var j = 0; j < recentAttacks.length; j++) {
+        var item = recentAttacks[j];
+        if (item.sourceCountry === countryName || item.targetCountry === countryName) {
+          related.push(item);
+        }
+      }
+
+      document.getElementById('emptyDetails').style.display = 'none';
+      document.getElementById('selectedCountryBox').style.display = 'block';
+      document.getElementById('selectedCountryName').textContent = countryName;
+      document.getElementById('selectedCountryCity').textContent = location ? ('Capital: ' + location.city) : 'Capital: -';
+      document.getElementById('statIncoming').textContent = incoming;
+      document.getElementById('statOutgoing').textContent = outgoing;
+      document.getElementById('statTotal').textContent = related.length;
+      document.getElementById('statTopType').textContent = getTopTypeForCountry(countryName);
+
+      var casesBox = document.getElementById('selectedCountryCases');
+      casesBox.innerHTML = '';
+
+      if (related.length === 0) {
+        casesBox.innerHTML = "<div class='attack-time'>No recent case for this country yet.</div>";
+      } else {
+        for (var k = 0; k < related.length; k++) {
+          var caseItem = document.createElement('div');
+          caseItem.className = 'attack-item';
+          caseItem.style.marginTop = '8px';
+          caseItem.style.marginBottom = '0';
+          caseItem.innerHTML =
+            "<div class='attack-route'>" + related[k].source + ' → ' + related[k].target + '</div>' +
+            "<div class='attack-type'>" + related[k].type + '</div>' +
+            "<div class='attack-time'>" + related[k].time + '</div>';
+          casesBox.appendChild(caseItem);
+        }
+      }
+
+      highlightCountryMarker(countryName);
+      renderTopCountries();
     }
 
     function createCountryMarkers() {
@@ -541,7 +604,7 @@
       var target = randomLocation();
       var type = randomAttackType();
 
-      while (source.city === target.city) {
+      while (source.country === target.country) {
         target = randomLocation();
       }
 
@@ -593,7 +656,7 @@
 
       updateTopBar(source, target, type);
       updateRecentAttacks(source, target, type);
-      updateTopCountries();
+      renderTopCountries();
 
       if (selectedCountry) {
         showCountryDetails(selectedCountry);
