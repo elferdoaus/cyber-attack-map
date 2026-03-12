@@ -323,13 +323,12 @@
       color:var(--text);
     }
 
+    /* ZOOM AU-DESSUS DE LA LEGEND */
     .leaflet-control-zoom{
       border:none !important;
       box-shadow:var(--shadow) !important;
       border-radius:16px !important;
       overflow:hidden;
-      margin-bottom:20px !important;
-      margin-left:20px !important;
     }
 
     .leaflet-control-zoom a{
@@ -343,9 +342,19 @@
       font-weight:700 !important;
     }
 
-    .leaflet-bottom.leaflet-left .leaflet-control{
+    .leaflet-bottom.leaflet-left .leaflet-control-zoom{
+      margin-left:20px !important;
+      margin-bottom:170px !important;
+    }
+
+    .reset-wrapper{
       margin-left:20px;
-      margin-bottom:20px;
+      margin-bottom:12px;
+    }
+
+    .leaflet-bottom.leaflet-left .leaflet-control.reset-parent{
+      margin-left:20px !important;
+      margin-bottom:270px !important;
     }
 
     .reset-control{
@@ -361,11 +370,6 @@
       display:flex;
       align-items:center;
       justify-content:center;
-    }
-
-    .reset-wrapper{
-      margin-left:20px;
-      margin-bottom:12px;
     }
 
     .leaflet-popup-content-wrapper,
@@ -417,6 +421,14 @@
       .legend{
         width:auto;
         max-width:240px;
+      }
+
+      .leaflet-bottom.leaflet-left .leaflet-control-zoom{
+        margin-bottom:210px !important;
+      }
+
+      .leaflet-bottom.leaflet-left .leaflet-control.reset-parent{
+        margin-bottom:310px !important;
       }
     }
   </style>
@@ -620,6 +632,13 @@
     };
 
     resetButton.addTo(map);
+
+    setTimeout(function(){
+      const resetContainer = document.querySelector(".reset-wrapper")?.closest(".leaflet-control");
+      if(resetContainer){
+        resetContainer.classList.add("reset-parent");
+      }
+    }, 0);
 
     function attack(){
       const source = random(capitals);
