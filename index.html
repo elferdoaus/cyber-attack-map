@@ -1,255 +1,710 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyber Threat Intelligence Map | Portfolio Project</title>
 
-<title>Cyber Attack Map</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg-soft:#0b1728;
+      --panel:rgba(11, 23, 40, 0.82);
+      --panel-border:rgba(255,255,255,0.10);
+      --text:#eef4ff;
+      --muted:#9cb0c9;
+      --cyan:#49e7ff;
+      --red:#ff5e73;
+      --green:#60f2a2;
+      --yellow:#ffd166;
+      --gray:#7f8ea3;
+      --shadow:0 10px 30px rgba(0,0,0,0.35);
+    }
 
-<style>
+    *{
+      box-sizing:border-box;
+    }
 
-body{
-margin:0;
-font-family:Arial;
-background:#0a1320;
-color:white;
-}
+    html,body{
+      margin:0;
+      padding:0;
+      height:100%;
+      font-family:Inter, Arial, sans-serif;
+      background:radial-gradient(circle at top, #10233d 0%, #07111f 50%, #040a13 100%);
+      color:var(--text);
+      overflow:hidden;
+    }
 
-header{
-text-align:center;
-padding:15px;
-background:#0d1828;
-border-bottom:1px solid rgba(255,255,255,0.1);
-}
+    #map{
+      height:100vh;
+      width:100%;
+      z-index:1;
+    }
 
-#map{
-height:100vh;
-width:100%;
-}
+    .topbar{
+      position:fixed;
+      top:18px;
+      left:18px;
+      right:18px;
+      z-index:1000;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      pointer-events:none;
+    }
 
-.card{
-background:rgba(255,255,255,0.05);
-border-radius:10px;
-padding:10px;
-margin:5px;
-}
+    .hero,
+    .status-box,
+    .sidebar,
+    .legend,
+    .credit{
+      pointer-events:auto;
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      box-shadow:var(--shadow);
+    }
 
-</style>
+    .hero{
+      max-width:620px;
+      border-radius:22px;
+      padding:18px 20px;
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:var(--cyan);
+      margin-bottom:10px;
+      font-weight:700;
+    }
+
+    .live-dot{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--green);
+      box-shadow:0 0 12px var(--green);
+      animation:pulse 1.6s infinite;
+    }
+
+    @keyframes pulse{
+      0%{transform:scale(1); opacity:1;}
+      50%{transform:scale(1.6); opacity:0.45;}
+      100%{transform:scale(1); opacity:1;}
+    }
+
+    .hero h1{
+      margin:0;
+      font-size:clamp(24px, 3vw, 40px);
+      line-height:1.05;
+      font-weight:800;
+    }
+
+    .hero p{
+      margin:10px 0 0;
+      color:var(--muted);
+      line-height:1.5;
+      font-size:14px;
+      max-width:560px;
+    }
+
+    .tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .tag{
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.08);
+      font-size:12px;
+      color:#dbe8ff;
+    }
+
+    .status-wrap{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(120px, 1fr));
+      gap:12px;
+      min-width:390px;
+    }
+
+    .status-box{
+      border-radius:18px;
+      padding:14px;
+    }
+
+    .status-label{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+
+    .status-value{
+      font-size:28px;
+      font-weight:800;
+      line-height:1;
+      margin-bottom:6px;
+    }
+
+    .status-sub{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .sidebar{
+      position:fixed;
+      top:150px;
+      right:18px;
+      width:340px;
+      z-index:1000;
+      border-radius:22px;
+      padding:18px;
+    }
+
+    .sidebar h2{
+      margin:0 0 6px;
+      font-size:22px;
+    }
+
+    .sidebar .small{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:16px;
+    }
+
+    .divider{
+      height:1px;
+      background:rgba(255,255,255,0.08);
+      margin:14px 0;
+    }
+
+    .metric-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .metric{
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .metric span{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:6px;
+    }
+
+    .metric strong{
+      font-size:18px;
+      color:var(--text);
+    }
+
+    .list-title{
+      margin:0 0 10px;
+      font-size:14px;
+      color:#dce9ff;
+    }
+
+    .threat-list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+
+    .threat-list li{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:13px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.05);
+    }
+
+    .badge{
+      padding:5px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+    }
+
+    .badge.red{ background:rgba(255,94,115,0.16); color:#ff8f9d; }
+    .badge.cyan{ background:rgba(73,231,255,0.14); color:#8ef2ff; }
+    .badge.yellow{ background:rgba(255,209,102,0.14); color:#ffe39a; }
+
+    .legend{
+      position:fixed;
+      bottom:18px;
+      left:18px;
+      z-index:1000;
+      border-radius:18px;
+      padding:14px 16px;
+      max-width:300px;
+    }
+
+    .legend h3{
+      margin:0 0 10px;
+      font-size:14px;
+    }
+
+    .legend-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:12px;
+      color:var(--muted);
+      margin:8px 0;
+    }
+
+    .legend-dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      flex-shrink:0;
+    }
+
+    .legend-line{
+      width:22px;
+      height:2px;
+      background:var(--cyan);
+      box-shadow:0 0 10px rgba(73,231,255,0.9);
+      flex-shrink:0;
+    }
+
+    .credit{
+      position:fixed;
+      bottom:18px;
+      right:18px;
+      z-index:1000;
+      border-radius:16px;
+      padding:12px 14px;
+      font-size:12px;
+      color:var(--muted);
+      max-width:300px;
+      line-height:1.45;
+    }
+
+    .credit strong{
+      color:var(--text);
+    }
+
+    .leaflet-control-zoom a{
+      background:#0f1c2f !important;
+      color:white !important;
+      border-bottom:1px solid rgba(255,255,255,0.08) !important;
+    }
+
+    .leaflet-control-zoom{
+      border:none !important;
+      box-shadow:var(--shadow) !important;
+      border-radius:14px !important;
+      overflow:hidden;
+    }
+
+    .custom-reset{
+      background:#0f1c2f;
+      color:white;
+      border:none;
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:18px;
+      box-shadow:var(--shadow);
+    }
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip{
+      background:#0f1c2f;
+      color:white;
+      border:1px solid rgba(255,255,255,0.08);
+    }
+
+    @media (max-width:1100px){
+      .topbar{
+        flex-direction:column;
+      }
+
+      .status-wrap{
+        min-width:auto;
+        width:100%;
+      }
+
+      .sidebar{
+        width:300px;
+        top:auto;
+        bottom:110px;
+      }
+    }
+
+    @media (max-width:820px){
+      .sidebar{
+        left:18px;
+        right:18px;
+        width:auto;
+      }
+
+      .status-wrap{
+        grid-template-columns:1fr;
+      }
+
+      .legend,
+      .credit{
+        display:none;
+      }
+    }
+  </style>
 </head>
-
 <body>
 
-<header>
-<h1>Cyber Attack Map</h1>
-<p>Threat activity detected</p>
-</header>
-
-<div id="map"></div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-
-var map = L.map('map',{
-minZoom:1,
-maxZoom:8,
-zoomSnap:0.25,
-maxBounds:[[-90,-200],[90,200]],
-maxBoundsViscosity:0
-}).setView([20,0],2);
-
-L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-{
-noWrap:true,
-attribution:'© OpenStreetMap'
-}).addTo(map);
-
-
-
-/* bouton reset vue monde */
-
-var resetButton = L.control({position:'topleft'});
-
-resetButton.onAdd = function(){
-
-var div = L.DomUtil.create('div','leaflet-bar');
-
-div.style.background='white';
-div.style.padding='6px 10px';
-div.style.cursor='pointer';
-div.innerHTML='🌍';
-
-div.onclick=function(){
-map.setView([20,0],2);
-};
-
-return div;
-
-};
-
-resetButton.addTo(map);
-
-
-
-/* capitales */
-
-var capitals=[
-
-["France","Paris",48.85,2.35],
-["Germany","Berlin",52.52,13.40],
-["United States","Washington",38.90,-77.03],
-["Russia","Moscow",55.75,37.61],
-["China","Beijing",39.90,116.40],
-["Japan","Tokyo",35.67,139.65],
-["India","New Delhi",28.61,77.20],
-["Saudi Arabia","Riyadh",24.71,46.67],
-["United Kingdom","London",51.50,-0.12],
-["Brazil","Brasilia",-15.79,-47.88]
-
-];
-
-capitals.forEach(function(c){
-
-L.circleMarker([c[2],c[3]],{
-radius:4,
-color:"#7a8da6",
-fillColor:"#7a8da6",
-fillOpacity:1
-}).addTo(map);
-
-});
-
-
-
-/* données attaques */
-
-var attackTypes=[
-"DDoS",
-"Malware",
-"Phishing",
-"Ransomware",
-"Brute Force"
-];
-
-
-
-function random(arr){
-return arr[Math.floor(Math.random()*arr.length)];
-}
-
-
-
-function attack(){
-
-var source=random(capitals);
-var target=random(capitals);
-
-if(source==target) return;
-
-
-
-var line=L.polyline([
-[source[2],source[3]],
-[target[2],target[3]]
-],
-{
-color:"#40f5ff",
-weight:2
-}).addTo(map);
-
-
-
-var s=L.circleMarker(
-[source[2],source[3]],
-{radius:7,color:"#ff4d4d",fillColor:"#ff4d4d",fillOpacity:1}
-).addTo(map);
-
-
-
-var t=L.circleMarker(
-[target[2],target[3]],
-{radius:7,color:"#40f5ff",fillColor:"#40f5ff",fillOpacity:1}
-).addTo(map);
-
-
-
-setTimeout(function(){
-
-map.removeLayer(line);
-map.removeLayer(s);
-map.removeLayer(t);
-
-},2000);
-
-}
-
-
-
-setInterval(attack,1200);
-
-
-
-/* chargement des pays */
-
-var selectedCountryLayer=null;
-
-function defaultStyle(){
-return{
-color:"#8fa2b7",
-weight:1,
-fillColor:"#dfe8ef",
-fillOpacity:0.15
-};
-}
-
-function selectedStyle(){
-return{
-color:"#333",
-weight:2,
-fillColor:"#888",
-fillOpacity:0.5
-};
-}
-
-
-
-fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json")
-
-.then(res=>res.json())
-
-.then(data=>{
-
-var layer=L.geoJSON(data,{
-
-style:defaultStyle,
-
-onEachFeature:function(feature,l){
-
-l.on("click",function(){
-
-if(selectedCountryLayer){
-selectedCountryLayer.setStyle(defaultStyle());
-}
-
-l.setStyle(selectedStyle());
-selectedCountryLayer=l;
-
-map.fitBounds(l.getBounds(),{maxZoom:4});
-
-});
-
-}
-
-}).addTo(map);
-
-});
-
-
-</script>
-
+  <div class="topbar">
+    <div class="hero">
+      <div class="eyebrow">
+        <span class="live-dot"></span>
+        Portfolio Project • Interactive Cyber Visualization
+      </div>
+      <h1>Cyber Threat Intelligence Map</h1>
+      <p>
+        Une démonstration interactive pensée pour mettre en valeur le front-end,
+        la data visualisation et l’expérience utilisateur autour de la cybersécurité.
+        Idéal pour un portfolio ou un post LinkedIn orienté recruteurs.
+      </p>
+      <div class="tags">
+        <div class="tag">HTML / CSS / JavaScript</div>
+        <div class="tag">Leaflet.js</div>
+        <div class="tag">Interactive Map UI</div>
+        <div class="tag">Portfolio-ready</div>
+      </div>
+    </div>
+
+    <div class="status-wrap">
+      <div class="status-box">
+        <div class="status-label">Live events</div>
+        <div class="status-value" id="liveEvents">0</div>
+        <div class="status-sub">simulated incidents displayed</div>
+      </div>
+
+      <div class="status-box">
+        <div class="status-label">Countries tracked</div>
+        <div class="status-value" id="countryCount">10</div>
+        <div class="status-sub">global monitoring nodes</div>
+      </div>
+
+      <div class="status-box">
+        <div class="status-label">Threat level</div>
+        <div class="status-value" id="threatLevel">Elevated</div>
+        <div class="status-sub">dynamic UI showcase</div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <h2 id="countryName">Global Overview</h2>
+    <div class="small" id="countrySubtitle">
+      Sélectionne un pays pour afficher ses indicateurs de risque simulés.
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric">
+        <span>Top city</span>
+        <strong id="topCity">—</strong>
+      </div>
+      <div class="metric">
+        <span>Incidents</span>
+        <strong id="incidentCount">—</strong>
+      </div>
+      <div class="metric">
+        <span>Main threat</span>
+        <strong id="mainThreat">—</strong>
+      </div>
+      <div class="metric">
+        <span>Risk score</span>
+        <strong id="riskScore">—</strong>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 class="list-title">Threat distribution</h3>
+    <ul class="threat-list" id="threatList">
+      <li><span>DDoS</span><span class="badge cyan">—</span></li>
+      <li><span>Malware</span><span class="badge red">—</span></li>
+      <li><span>Phishing</span><span class="badge yellow">—</span></li>
+    </ul>
+  </aside>
+
+  <div class="legend">
+    <h3>Legend</h3>
+    <div class="legend-row">
+      <span class="legend-dot" style="background:#ff5e73; box-shadow:0 0 10px rgba(255,94,115,0.9);"></span>
+      Attack source
+    </div>
+    <div class="legend-row">
+      <span class="legend-dot" style="background:#49e7ff; box-shadow:0 0 10px rgba(73,231,255,0.9);"></span>
+      Target endpoint
+    </div>
+    <div class="legend-row">
+      <span class="legend-line"></span>
+      Live connection flow
+    </div>
+    <div class="legend-row">
+      <span class="legend-dot" style="background:#7f8ea3;"></span>
+      Capital marker
+    </div>
+  </div>
+
+  <div class="credit">
+    <strong>Recruiter note:</strong> ce projet est une visualisation interactive
+    de données simulées, conçue pour démontrer l’UI, l’UX, la cartographie et le JavaScript.
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const map = L.map("map", {
+      minZoom: 1.6,
+      maxZoom: 8,
+      zoomSnap: 0.25,
+      worldCopyJump: false,
+      maxBounds: [[-85, -180], [85, 180]],
+      maxBoundsViscosity: 0.8
+    }).setView([20, 0], 2);
+
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      {
+        attribution: "&copy; OpenStreetMap &copy; CARTO",
+        noWrap: true
+      }
+    ).addTo(map);
+
+    const capitals = [
+      ["France","Paris",48.85,2.35],
+      ["Germany","Berlin",52.52,13.40],
+      ["United States","Washington",38.90,-77.03],
+      ["Russia","Moscow",55.75,37.61],
+      ["China","Beijing",39.90,116.40],
+      ["Japan","Tokyo",35.67,139.65],
+      ["India","New Delhi",28.61,77.20],
+      ["Saudi Arabia","Riyadh",24.71,46.67],
+      ["United Kingdom","London",51.50,-0.12],
+      ["Brazil","Brasilia",-15.79,-47.88]
+    ];
+
+    const attackTypes = ["DDoS", "Malware", "Phishing", "Ransomware", "Brute Force"];
+    const cityMap = {
+      "France":["Paris","Lyon","Marseille"],
+      "Germany":["Berlin","Hamburg","Munich"],
+      "United States":["Washington","New York","Austin"],
+      "Russia":["Moscow","Saint Petersburg","Kazan"],
+      "China":["Beijing","Shanghai","Shenzhen"],
+      "Japan":["Tokyo","Osaka","Yokohama"],
+      "India":["New Delhi","Bangalore","Mumbai"],
+      "Saudi Arabia":["Riyadh","Jeddah","Dammam"],
+      "United Kingdom":["London","Manchester","Birmingham"],
+      "Brazil":["Brasilia","São Paulo","Rio de Janeiro"]
+    };
+
+    let liveEvents = 0;
+    let selectedCountryLayer = null;
+
+    function random(arr){
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function randomInt(min, max){
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    capitals.forEach(function(c){
+      L.circleMarker([c[2], c[3]], {
+        radius: 4,
+        color: "#7f8ea3",
+        fillColor: "#7f8ea3",
+        fillOpacity: 1,
+        weight: 1
+      })
+      .addTo(map)
+      .bindPopup(`<strong>${c[1]}</strong><br>${c[0]}`);
+    });
+
+    const resetButton = L.control({ position: "topleft" });
+
+    resetButton.onAdd = function(){
+      const div = L.DomUtil.create("div");
+      div.innerHTML = `<button class="custom-reset" title="Reset world view">🌍</button>`;
+      div.onclick = function(e){
+        e.stopPropagation();
+        map.setView([20, 0], 2);
+      };
+      return div;
+    };
+
+    resetButton.addTo(map);
+
+    function attack(){
+      const source = random(capitals);
+      const target = random(capitals);
+
+      if(source === target) return;
+
+      const line = L.polyline(
+        [[source[2], source[3]], [target[2], target[3]]],
+        {
+          color: "#49e7ff",
+          weight: 2,
+          opacity: 0.95
+        }
+      ).addTo(map);
+
+      const s = L.circleMarker([source[2], source[3]], {
+        radius: 7,
+        color: "#ff5e73",
+        fillColor: "#ff5e73",
+        fillOpacity: 1
+      }).addTo(map);
+
+      const t = L.circleMarker([target[2], target[3]], {
+        radius: 7,
+        color: "#49e7ff",
+        fillColor: "#49e7ff",
+        fillOpacity: 1
+      }).addTo(map);
+
+      liveEvents++;
+      document.getElementById("liveEvents").textContent = liveEvents;
+
+      setTimeout(function(){
+        map.removeLayer(line);
+        map.removeLayer(s);
+        map.removeLayer(t);
+      }, 1700);
+    }
+
+    setInterval(attack, 1100);
+
+    function defaultStyle(){
+      return {
+        color:"#6f8198",
+        weight:1,
+        fillColor:"#a9b7c8",
+        fillOpacity:0.12
+      };
+    }
+
+    function selectedStyle(){
+      return {
+        color:"#dce9ff",
+        weight:2,
+        fillColor:"#718096",
+        fillOpacity:0.45
+      };
+    }
+
+    function updateSidebar(countryName){
+      const cities = cityMap[countryName] || ["Unknown"];
+      const mainThreat = random(attackTypes);
+      const incidents = randomInt(18, 140);
+      const score = randomInt(62, 97);
+
+      const distribution = [
+        { name:"DDoS", value: randomInt(10, 40), cls:"cyan" },
+        { name:"Malware", value: randomInt(10, 40), cls:"red" },
+        { name:"Phishing", value: randomInt(10, 40), cls:"yellow" },
+        { name:"Ransomware", value: randomInt(10, 40), cls:"red" }
+      ];
+
+      document.getElementById("countryName").textContent = countryName;
+      document.getElementById("countrySubtitle").textContent =
+        "Interactive country focus with simulated cyber activity indicators.";
+      document.getElementById("topCity").textContent = random(cities);
+      document.getElementById("incidentCount").textContent = incidents;
+      document.getElementById("mainThreat").textContent = mainThreat;
+      document.getElementById("riskScore").textContent = score + "/100";
+
+      document.getElementById("threatList").innerHTML = distribution.map(item => `
+        <li>
+          <span>${item.name}</span>
+          <span class="badge ${item.cls}">${item.value}%</span>
+        </li>
+      `).join("");
+    }
+
+    fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json")
+      .then(res => res.json())
+      .then(data => {
+        L.geoJSON(data, {
+          style: defaultStyle,
+          onEachFeature: function(feature, layer){
+            const countryName = feature.properties.name || "Unknown";
+
+            layer.on("mouseover", function(){
+              if(layer !== selectedCountryLayer){
+                layer.setStyle({
+                  color:"#8fdfff",
+                  weight:1.5,
+                  fillOpacity:0.18
+                });
+              }
+            });
+
+            layer.on("mouseout", function(){
+              if(layer !== selectedCountryLayer){
+                layer.setStyle(defaultStyle());
+              }
+            });
+
+            layer.on("click", function(){
+              if(selectedCountryLayer){
+                selectedCountryLayer.setStyle(defaultStyle());
+              }
+
+              layer.setStyle(selectedStyle());
+              selectedCountryLayer = layer;
+
+              map.fitBounds(layer.getBounds(), { maxZoom: 4, padding:[20,20] });
+              updateSidebar(countryName);
+            });
+          }
+        }).addTo(map);
+      });
+
+    const threatLevels = ["Elevated", "High", "Moderate"];
+    let threatIndex = 0;
+
+    setInterval(() => {
+      threatIndex = (threatIndex + 1) % threatLevels.length;
+      document.getElementById("threatLevel").textContent = threatLevels[threatIndex];
+    }, 4000);
+
+    document.getElementById("countryCount").textContent = capitals.length;
+  </script>
 </body>
 </html>
