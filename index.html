@@ -5,57 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cyber Threat Map | Portfolio Project</title>
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
     :root{
-      --bg:#f3f6fb;
-      --bg-soft:rgba(255,255,255,0.86);
-      --panel:rgba(255,255,255,0.88);
-      --panel-border:rgba(20, 34, 58, 0.10);
-      --text:#18263a;
-      --muted:#617287;
-      --accent:#406a8f;
-      --accent-soft:#6f8ba7;
-      --danger:#b85c5c;
-      --success:#4c7a67;
-      --warning:#b2874b;
-      --shadow:0 14px 40px rgba(28, 44, 70, 0.12);
+      --bg:#eef2f6;
+      --panel:rgba(255,255,255,0.92);
+      --panel-border:rgba(26,42,64,0.10);
+      --text:#17263b;
+      --muted:#607287;
+      --accent:#456b93;
+      --accent-soft:#8da0b5;
+      --danger:#bc6565;
+      --success:#5d8472;
+      --warning:#b89259;
+      --shadow:0 16px 42px rgba(22, 36, 58, 0.12);
     }
 
     *{
       box-sizing:border-box;
     }
 
-    html,body{
+    html, body{
+      width:100%;
+      height:100%;
       margin:0;
       padding:0;
-      height:100%;
-      font-family:Inter, Arial, sans-serif;
-      background:linear-gradient(180deg, #eef3f9 0%, #e8eef6 100%);
-      color:var(--text);
       overflow:hidden;
+      font-family:Inter, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
 
     #map{
+      position:fixed;
+      inset:0;
+      width:100vw;
       height:100vh;
-      width:100%;
       z-index:1;
     }
 
     .topbar{
       position:fixed;
-      top:18px;
-      left:18px;
-      right:18px;
+      top:20px;
+      left:20px;
+      right:20px;
       z-index:1000;
       display:flex;
       justify-content:space-between;
       align-items:flex-start;
-      gap:16px;
+      gap:18px;
       pointer-events:none;
     }
 
@@ -65,17 +64,17 @@
     .legend,
     .credit{
       pointer-events:auto;
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
       background:var(--panel);
       border:1px solid var(--panel-border);
       box-shadow:var(--shadow);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
     }
 
     .hero{
-      max-width:620px;
-      border-radius:22px;
-      padding:18px 20px;
+      max-width:700px;
+      border-radius:26px;
+      padding:22px 24px;
     }
 
     .eyebrow{
@@ -83,217 +82,225 @@
       align-items:center;
       gap:8px;
       font-size:12px;
+      font-weight:700;
       letter-spacing:0.08em;
       text-transform:uppercase;
       color:var(--accent);
-      margin-bottom:10px;
-      font-weight:700;
+      margin-bottom:12px;
     }
 
     .live-dot{
-      width:8px;
-      height:8px;
+      width:9px;
+      height:9px;
       border-radius:50%;
       background:var(--success);
-      box-shadow:0 0 0 4px rgba(76,122,103,0.12);
+      box-shadow:0 0 0 5px rgba(93,132,114,0.12);
       animation:pulse 1.8s infinite;
     }
 
     @keyframes pulse{
-      0%{transform:scale(1); opacity:1;}
-      50%{transform:scale(1.35); opacity:0.55;}
-      100%{transform:scale(1); opacity:1;}
+      0%{transform:scale(1);opacity:1;}
+      50%{transform:scale(1.35);opacity:0.55;}
+      100%{transform:scale(1);opacity:1;}
     }
 
     .hero h1{
       margin:0;
-      font-size:clamp(24px, 3vw, 40px);
-      line-height:1.05;
+      font-size:clamp(32px, 4vw, 64px);
+      line-height:1.02;
       font-weight:800;
-      color:#122033;
+      letter-spacing:-0.02em;
+      color:#14243a;
     }
 
     .hero p{
-      margin:10px 0 0;
+      margin:14px 0 0;
+      font-size:16px;
+      line-height:1.55;
       color:var(--muted);
-      line-height:1.5;
-      font-size:14px;
-      max-width:560px;
+      max-width:620px;
     }
 
     .tags{
       display:flex;
       flex-wrap:wrap;
-      gap:10px;
-      margin-top:14px;
+      gap:12px;
+      margin-top:18px;
     }
 
     .tag{
-      padding:8px 12px;
+      padding:10px 14px;
       border-radius:999px;
-      background:#f5f8fc;
-      border:1px solid rgba(20, 34, 58, 0.08);
-      font-size:12px;
-      color:#29425f;
+      background:#f4f7fb;
+      border:1px solid rgba(26,42,64,0.08);
+      color:#304863;
+      font-size:13px;
+      font-weight:500;
     }
 
     .status-wrap{
       display:grid;
-      grid-template-columns:repeat(3, minmax(120px, 1fr));
-      gap:12px;
-      min-width:390px;
+      grid-template-columns:repeat(3, minmax(160px, 1fr));
+      gap:14px;
+      min-width:520px;
     }
 
     .status-box{
-      border-radius:18px;
-      padding:14px;
+      border-radius:22px;
+      padding:16px 18px;
     }
 
     .status-label{
       font-size:12px;
       text-transform:uppercase;
-      letter-spacing:0.06em;
+      letter-spacing:0.07em;
       color:var(--muted);
       margin-bottom:8px;
+      font-weight:700;
     }
 
     .status-value{
-      font-size:28px;
+      font-size:32px;
       font-weight:800;
       line-height:1;
-      margin-bottom:6px;
-      color:#142238;
+      margin-bottom:8px;
+      color:#14243a;
     }
 
     .status-sub{
-      font-size:12px;
+      font-size:13px;
       color:var(--muted);
+      line-height:1.35;
     }
 
     .sidebar{
       position:fixed;
-      top:150px;
-      right:18px;
-      width:340px;
+      top:175px;
+      right:20px;
+      width:370px;
       z-index:1000;
-      border-radius:22px;
-      padding:18px;
+      border-radius:26px;
+      padding:20px;
     }
 
     .sidebar h2{
-      margin:0 0 6px;
-      font-size:22px;
-      color:#142238;
+      margin:0 0 8px;
+      font-size:32px;
+      line-height:1.05;
+      color:#14243a;
     }
 
     .sidebar .small{
       color:var(--muted);
-      font-size:13px;
-      margin-bottom:16px;
-    }
-
-    .divider{
-      height:1px;
-      background:rgba(20,34,58,0.08);
-      margin:14px 0;
+      font-size:15px;
+      line-height:1.4;
+      margin-bottom:18px;
     }
 
     .metric-grid{
       display:grid;
       grid-template-columns:1fr 1fr;
-      gap:10px;
+      gap:12px;
     }
 
     .metric{
-      background:#f7f9fc;
-      border:1px solid rgba(20,34,58,0.06);
-      border-radius:14px;
-      padding:12px;
+      background:#f5f7fa;
+      border:1px solid rgba(26,42,64,0.06);
+      border-radius:18px;
+      padding:15px 16px;
     }
 
     .metric span{
       display:block;
       color:var(--muted);
-      font-size:12px;
-      margin-bottom:6px;
+      font-size:13px;
+      margin-bottom:8px;
     }
 
     .metric strong{
-      font-size:18px;
+      font-size:20px;
       color:var(--text);
+      line-height:1.2;
+    }
+
+    .divider{
+      height:1px;
+      background:rgba(26,42,64,0.08);
+      margin:18px 0;
     }
 
     .list-title{
-      margin:0 0 10px;
-      font-size:14px;
-      color:#233854;
+      margin:0 0 12px;
+      font-size:16px;
+      font-weight:700;
+      color:#223650;
     }
 
     .threat-list{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
       margin:0;
       padding:0;
       list-style:none;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
     .threat-list li{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      font-size:13px;
-      padding:10px 12px;
-      border-radius:12px;
-      background:#f7f9fc;
-      border:1px solid rgba(20,34,58,0.05);
+      padding:14px 14px;
+      border-radius:16px;
+      background:#f5f7fa;
+      border:1px solid rgba(26,42,64,0.05);
+      font-size:14px;
     }
 
     .badge{
-      padding:5px 8px;
+      padding:6px 10px;
       border-radius:999px;
-      font-size:11px;
+      font-size:12px;
       font-weight:700;
     }
 
-    .badge.red{ background:rgba(184,92,92,0.12); color:#9f4c4c; }
-    .badge.blue{ background:rgba(64,106,143,0.12); color:#406a8f; }
-    .badge.gold{ background:rgba(178,135,75,0.14); color:#9b7341; }
+    .badge.red{ background:rgba(188,101,101,0.12); color:#a65151; }
+    .badge.blue{ background:rgba(69,107,147,0.12); color:#456b93; }
+    .badge.gold{ background:rgba(184,146,89,0.14); color:#9a7842; }
 
     .legend{
       position:fixed;
-      bottom:18px;
-      left:18px;
+      bottom:20px;
+      left:20px;
       z-index:1000;
-      border-radius:18px;
-      padding:14px 16px;
-      max-width:300px;
+      border-radius:22px;
+      padding:16px 18px;
+      width:240px;
     }
 
     .legend h3{
-      margin:0 0 10px;
-      font-size:14px;
-      color:#1a2b42;
+      margin:0 0 12px;
+      font-size:16px;
+      color:#1a2c43;
     }
 
     .legend-row{
       display:flex;
       align-items:center;
-      gap:10px;
-      font-size:12px;
+      gap:12px;
+      font-size:13px;
       color:var(--muted);
-      margin:8px 0;
+      margin:10px 0;
     }
 
     .legend-dot{
-      width:10px;
-      height:10px;
+      width:12px;
+      height:12px;
       border-radius:50%;
       flex-shrink:0;
     }
 
     .legend-line{
-      width:22px;
+      width:26px;
       height:2px;
       background:var(--accent);
       flex-shrink:0;
@@ -301,15 +308,15 @@
 
     .credit{
       position:fixed;
-      bottom:18px;
-      right:18px;
+      right:20px;
+      bottom:20px;
       z-index:1000;
-      border-radius:16px;
-      padding:12px 14px;
-      font-size:12px;
+      border-radius:20px;
+      padding:16px 18px;
+      width:330px;
+      font-size:13px;
+      line-height:1.55;
       color:var(--muted);
-      max-width:300px;
-      line-height:1.45;
     }
 
     .credit strong{
@@ -319,44 +326,57 @@
     .leaflet-control-zoom{
       border:none !important;
       box-shadow:var(--shadow) !important;
-      border-radius:14px !important;
+      border-radius:16px !important;
       overflow:hidden;
+      margin-bottom:20px !important;
+      margin-left:20px !important;
     }
 
     .leaflet-control-zoom a{
       background:#ffffff !important;
-      color:#1b2c43 !important;
-      border-bottom:1px solid rgba(20,34,58,0.08) !important;
-      width:38px !important;
-      height:38px !important;
-      line-height:38px !important;
+      color:#16263b !important;
+      border-bottom:1px solid rgba(26,42,64,0.08) !important;
+      width:42px !important;
+      height:42px !important;
+      line-height:42px !important;
+      font-size:20px !important;
+      font-weight:700 !important;
     }
 
-    .leaflet-bottom.leaflet-right .leaflet-control{
-      margin-right:18px;
-      margin-bottom:18px;
+    .leaflet-bottom.leaflet-left .leaflet-control{
+      margin-left:20px;
+      margin-bottom:20px;
     }
 
-    .custom-reset{
+    .reset-control{
       background:#ffffff;
-      color:#1b2c43;
+      color:#16263b;
       border:none;
-      width:40px;
-      height:40px;
-      border-radius:12px;
+      width:42px;
+      height:42px;
+      border-radius:14px;
       cursor:pointer;
       font-size:18px;
       box-shadow:var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .reset-wrapper{
+      margin-left:20px;
+      margin-bottom:12px;
     }
 
     .leaflet-popup-content-wrapper,
     .leaflet-popup-tip{
       background:#ffffff;
-      color:#1a2a40;
-      border:1px solid rgba(20,34,58,0.08);
+      color:#16263b;
+      border:1px solid rgba(26,42,64,0.08);
+      box-shadow:var(--shadow);
     }
 
-    @media (max-width:1100px){
+    @media (max-width:1200px){
       .topbar{
         flex-direction:column;
       }
@@ -365,18 +385,28 @@
         min-width:auto;
         width:100%;
       }
+    }
 
+    @media (max-width:920px){
       .sidebar{
-        width:300px;
-        top:auto;
-        bottom:110px;
+        width:320px;
+      }
+
+      .credit{
+        display:none;
       }
     }
 
     @media (max-width:820px){
+      .hero{
+        max-width:none;
+      }
+
       .sidebar{
-        left:18px;
-        right:18px;
+        left:20px;
+        right:20px;
+        top:auto;
+        bottom:110px;
         width:auto;
       }
 
@@ -384,14 +414,16 @@
         grid-template-columns:1fr;
       }
 
-      .legend,
-      .credit{
-        display:none;
+      .legend{
+        width:auto;
+        max-width:240px;
       }
     }
   </style>
 </head>
 <body>
+
+  <div id="map"></div>
 
   <div class="topbar">
     <div class="hero">
@@ -434,7 +466,7 @@
     </div>
   </div>
 
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar">
     <h2 id="countryName">Global Overview</h2>
     <div class="small" id="countrySubtitle">
       Sélectionne un pays pour afficher ses indicateurs de risque simulés.
@@ -466,17 +498,18 @@
       <li><span>DDoS</span><span class="badge blue">—</span></li>
       <li><span>Malware</span><span class="badge red">—</span></li>
       <li><span>Phishing</span><span class="badge gold">—</span></li>
+      <li><span>Ransomware</span><span class="badge red">—</span></li>
     </ul>
   </aside>
 
   <div class="legend">
     <h3>Legend</h3>
     <div class="legend-row">
-      <span class="legend-dot" style="background:#b85c5c;"></span>
+      <span class="legend-dot" style="background:#bc6565;"></span>
       Attack source
     </div>
     <div class="legend-row">
-      <span class="legend-dot" style="background:#406a8f;"></span>
+      <span class="legend-dot" style="background:#456b93;"></span>
       Target endpoint
     </div>
     <div class="legend-row">
@@ -484,7 +517,7 @@
       Live connection flow
     </div>
     <div class="legend-row">
-      <span class="legend-dot" style="background:#8d9aae;"></span>
+      <span class="legend-dot" style="background:#8da0b5;"></span>
       Capital marker
     </div>
   </div>
@@ -494,30 +527,29 @@
     de données simulées, conçue pour démontrer l’UI, l’UX, la cartographie et le JavaScript.
   </div>
 
-  <div id="map"></div>
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
     const map = L.map("map", {
-      minZoom: 1.6,
+      zoomControl: false,
+      minZoom: 2,
       maxZoom: 8,
       zoomSnap: 0.25,
       worldCopyJump: false,
       maxBounds: [[-85, -180], [85, 180]],
-      maxBoundsViscosity: 0.8,
-      zoomControl: false
+      maxBoundsViscosity: 1.0,
+      inertia: true,
+      inertiaDeceleration: 3000
     }).setView([20, 0], 2);
 
     L.control.zoom({
-      position: "bottomright"
+      position: "bottomleft"
     }).addTo(map);
 
     L.tileLayer(
       "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
       {
-        attribution: "&copy; OpenStreetMap &copy; CARTO",
-        noWrap: true
+        attribution: "&copy; OpenStreetMap &copy; CARTO"
       }
     ).addTo(map);
 
@@ -535,6 +567,7 @@
     ];
 
     const attackTypes = ["DDoS", "Malware", "Phishing", "Ransomware", "Brute Force"];
+
     const cityMap = {
       "France":["Paris","Lyon","Marseille"],
       "Germany":["Berlin","Hamburg","Munich"],
@@ -561,9 +594,9 @@
 
     capitals.forEach(function(c){
       L.circleMarker([c[2], c[3]], {
-        radius: 4,
-        color: "#8d9aae",
-        fillColor: "#8d9aae",
+        radius: 5,
+        color: "#8da0b5",
+        fillColor: "#8da0b5",
         fillOpacity: 1,
         weight: 1
       })
@@ -571,16 +604,18 @@
       .bindPopup(`<strong>${c[1]}</strong><br>${c[0]}`);
     });
 
-    const resetButton = L.control({ position: "bottomright" });
+    const resetButton = L.control({ position: "bottomleft" });
 
     resetButton.onAdd = function(){
-      const div = L.DomUtil.create("div");
-      div.style.marginBottom = "100px";
-      div.innerHTML = `<button class="custom-reset" title="Reset world view">🌍</button>`;
-      div.onclick = function(e){
-        e.stopPropagation();
+      const div = L.DomUtil.create("div", "reset-wrapper");
+      div.innerHTML = `<button class="reset-control" title="Reset world view">🌍</button>`;
+
+      const button = div.querySelector("button");
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.on(button, "click", function(){
         map.setView([20, 0], 2);
-      };
+      });
+
       return div;
     };
 
@@ -595,23 +630,23 @@
       const line = L.polyline(
         [[source[2], source[3]], [target[2], target[3]]],
         {
-          color: "#406a8f",
+          color: "#456b93",
           weight: 2,
           opacity: 0.9
         }
       ).addTo(map);
 
       const s = L.circleMarker([source[2], source[3]], {
-        radius: 7,
-        color: "#b85c5c",
-        fillColor: "#b85c5c",
+        radius: 8,
+        color: "#bc6565",
+        fillColor: "#bc6565",
         fillOpacity: 1
       }).addTo(map);
 
       const t = L.circleMarker([target[2], target[3]], {
-        radius: 7,
-        color: "#406a8f",
-        fillColor: "#406a8f",
+        radius: 8,
+        color: "#456b93",
+        fillColor: "#456b93",
         fillOpacity: 1
       }).addTo(map);
 
@@ -629,18 +664,18 @@
 
     function defaultStyle(){
       return {
-        color:"#98a7b9",
+        color:"#9aaabc",
         weight:1,
-        fillColor:"#d9e1ea",
-        fillOpacity:0.25
+        fillColor:"#dde4ec",
+        fillOpacity:0.20
       };
     }
 
     function selectedStyle(){
       return {
-        color:"#4f6278",
+        color:"#55697f",
         weight:2,
-        fillColor:"#9daabc",
+        fillColor:"#aeb9c6",
         fillOpacity:0.45
       };
     }
@@ -685,7 +720,7 @@
             layer.on("mouseover", function(){
               if(layer !== selectedCountryLayer){
                 layer.setStyle({
-                  color:"#6f85a0",
+                  color:"#768aa1",
                   weight:1.5,
                   fillOpacity:0.30
                 });
@@ -706,7 +741,11 @@
               layer.setStyle(selectedStyle());
               selectedCountryLayer = layer;
 
-              map.fitBounds(layer.getBounds(), { maxZoom: 4, padding:[20,20] });
+              map.fitBounds(layer.getBounds(), {
+                maxZoom: 4,
+                padding:[20,20]
+              });
+
               updateSidebar(countryName);
             });
           }
