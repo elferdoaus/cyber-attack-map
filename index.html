@@ -11,495 +11,473 @@
   />
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
     }
 
-    :root {
-      --bg: #07111d;
-      --panel: rgba(8, 19, 33, 0.84);
-      --panel-border: rgba(120, 170, 220, 0.18);
-      --text: #e8f0ff;
-      --muted: #9eb1c9;
-      --accent: #3fd0ff;
-      --accent-2: #49ffb4;
-      --danger: #ff5f7a;
-      --warning: #ffc857;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    :root{
+      --bg:#07111d;
+      --panel:rgba(7,17,29,0.90);
+      --panel-border:rgba(130,180,230,0.14);
+      --text:#eef5ff;
+      --muted:#9cb0c9;
+      --blue:#4fd7ff;
+      --cyan:#7fe7ff;
+      --green:#57ffb1;
+      --yellow:#ffc857;
+      --red:#ff5f7a;
+      --shadow:0 12px 30px rgba(0,0,0,0.35);
     }
 
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--text);
+    html,body{
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
 
-    body {
-      position: relative;
+    #map{
+      width:100vw;
+      height:100vh;
+      background:#08111c;
     }
 
-    #map {
-      width: 100vw;
-      height: 100vh;
-      background: #08111c;
-    }
-
-    .topbar {
-      position: absolute;
-      top: 18px;
-      left: 18px;
-      right: 18px;
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      pointer-events: none;
+    .topbar{
+      position:absolute;
+      top:16px;
+      left:16px;
+      right:16px;
+      z-index:3000;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      pointer-events:none;
     }
 
     .brand,
-    .top-stats,
-    .right-tools,
+    .stats,
+    .toolbox,
     .side-panel,
-    .bottom-strip,
-    .legend-box {
-      pointer-events: auto;
+    .legend,
+    .country-info-panel{
+      pointer-events:auto;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 18px;
-      background: var(--panel);
-      border: 1px solid var(--panel-border);
-      border-radius: 18px;
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow);
-      min-width: 280px;
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px 18px;
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      border-radius:18px;
+      backdrop-filter:blur(12px);
+      box-shadow:var(--shadow);
+      min-width:280px;
     }
 
-    .brand-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #7fffd4 0%, #00d2ff 100%);
-      box-shadow: 0 0 18px rgba(63, 208, 255, 0.9);
-      animation: pulse 1.8s infinite;
-      flex-shrink: 0;
+    .brand-pulse{
+      width:13px;
+      height:13px;
+      border-radius:50%;
+      background:radial-gradient(circle,#9ffff3 0%, #3fd0ff 100%);
+      box-shadow:0 0 18px rgba(63,208,255,0.9);
+      animation:softPulse 1.7s infinite;
+      flex-shrink:0;
     }
 
-    .brand h1 {
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: 0.2px;
+    .brand h1{
+      font-size:18px;
+      font-weight:800;
+      line-height:1;
+      margin-bottom:4px;
     }
 
-    .brand p {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 3px;
+    .brand p{
+      font-size:12px;
+      color:var(--muted);
     }
 
-    .top-stats {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
+    .stats{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
     }
 
-    .stat-card {
-      min-width: 150px;
-      padding: 12px 14px;
-      background: var(--panel);
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow);
+    .stat{
+      min-width:150px;
+      padding:12px 14px;
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      border-radius:16px;
+      backdrop-filter:blur(12px);
+      box-shadow:var(--shadow);
     }
 
-    .stat-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1.1px;
-      color: var(--muted);
-      margin-bottom: 6px;
+    .stat-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      color:var(--muted);
+      margin-bottom:7px;
     }
 
-    .stat-value {
-      font-size: 22px;
-      font-weight: 800;
-      line-height: 1;
+    .stat-value{
+      font-size:22px;
+      font-weight:800;
+      line-height:1;
     }
 
-    .stat-sub {
-      margin-top: 5px;
-      font-size: 11px;
-      color: var(--muted);
+    .stat-sub{
+      margin-top:6px;
+      font-size:11px;
+      color:var(--muted);
     }
 
-    .right-tools {
-      display: flex;
-      gap: 10px;
+    .toolbox{
+      display:flex;
+      gap:10px;
     }
 
-    .tool-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 46px;
-      height: 46px;
-      border-radius: 14px;
-      border: 1px solid var(--panel-border);
-      background: var(--panel);
-      color: var(--text);
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow);
-      cursor: pointer;
-      font-size: 18px;
-      transition: 0.2s ease;
+    .tool-btn{
+      width:46px;
+      height:46px;
+      border:none;
+      border-radius:14px;
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      color:var(--text);
+      font-size:20px;
+      cursor:pointer;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+      transition:0.2s ease;
     }
 
-    .tool-btn:hover {
-      transform: translateY(-1px);
-      border-color: rgba(100, 220, 255, 0.45);
+    .tool-btn:hover{
+      transform:translateY(-1px);
+      border-color:rgba(127,231,255,0.5);
     }
 
-    .side-panel {
-      position: absolute;
-      top: 96px;
-      right: 18px;
-      width: 360px;
-      max-height: calc(100vh - 190px);
-      z-index: 2000;
-      background: rgba(7, 17, 29, 0.9);
-      border: 1px solid var(--panel-border);
-      border-radius: 22px;
-      backdrop-filter: blur(16px);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+    .side-panel{
+      position:absolute;
+      top:92px;
+      right:16px;
+      width:360px;
+      max-height:calc(100vh - 235px);
+      z-index:3000;
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      border-radius:22px;
+      backdrop-filter:blur(14px);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
     }
 
-    .panel-header {
-      padding: 18px 18px 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    .panel-header{
+      padding:18px 18px 14px;
+      border-bottom:1px solid rgba(255,255,255,0.06);
     }
 
-    .panel-title {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 4px;
+    .panel-title{
+      font-size:16px;
+      font-weight:800;
+      margin-bottom:4px;
     }
 
-    .panel-subtitle {
-      font-size: 12px;
-      color: var(--muted);
+    .panel-subtitle{
+      font-size:12px;
+      color:var(--muted);
     }
 
-    .feed {
-      overflow: auto;
-      padding: 10px;
+    .feed{
+      padding:10px;
+      overflow:auto;
     }
 
-    .feed::-webkit-scrollbar {
-      width: 8px;
+    .feed::-webkit-scrollbar{
+      width:8px;
     }
 
-    .feed::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.14);
-      border-radius: 20px;
+    .feed::-webkit-scrollbar-thumb{
+      background:rgba(255,255,255,0.14);
+      border-radius:20px;
     }
 
-    .feed-item {
-      padding: 12px 12px 11px;
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      background: rgba(255,255,255,0.02);
-      margin-bottom: 10px;
-      transition: 0.2s ease;
+    .feed-item{
+      padding:12px;
+      border-radius:16px;
+      margin-bottom:10px;
+      background:rgba(255,255,255,0.025);
+      border:1px solid rgba(255,255,255,0.06);
+      transition:0.2s ease;
     }
 
-    .feed-item:hover {
-      background: rgba(255,255,255,0.04);
-      border-color: rgba(100, 220, 255, 0.25);
+    .feed-item:hover{
+      background:rgba(255,255,255,0.04);
+      border-color:rgba(127,231,255,0.18);
     }
 
-    .feed-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
+    .feed-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:7px;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.9px;
-      padding: 5px 8px;
-      border-radius: 999px;
+    .badge{
+      font-size:10px;
+      text-transform:uppercase;
+      font-weight:800;
+      letter-spacing:0.9px;
+      padding:5px 8px;
+      border-radius:999px;
     }
 
-    .badge.ddos {
-      background: rgba(255, 95, 122, 0.14);
-      color: #ff8a9f;
+    .badge.ddos{
+      background:rgba(255,95,122,0.14);
+      color:#ff93a6;
     }
 
-    .badge.malware {
-      background: rgba(255, 200, 87, 0.14);
-      color: #ffd67f;
+    .badge.malware{
+      background:rgba(255,200,87,0.14);
+      color:#ffd67f;
     }
 
-    .badge.intrusion {
-      background: rgba(73, 255, 180, 0.14);
-      color: #95ffd4;
+    .badge.intrusion{
+      background:rgba(87,255,177,0.14);
+      color:#9dffd0;
     }
 
-    .feed-time {
-      font-size: 11px;
-      color: var(--muted);
+    .feed-time{
+      font-size:11px;
+      color:var(--muted);
     }
 
-    .feed-route {
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 4px;
+    .feed-route{
+      font-size:13px;
+      font-weight:800;
+      margin-bottom:5px;
     }
 
-    .feed-meta {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.45;
+    .feed-meta{
+      font-size:12px;
+      color:#d1def1;
+      line-height:1.45;
     }
 
-    .legend-box {
-      position: absolute;
-      left: 18px;
-      bottom: 18px;
-      z-index: 2000;
-      padding: 14px 16px;
-      border-radius: 18px;
-      background: var(--panel);
-      border: 1px solid var(--panel-border);
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow);
-      min-width: 220px;
+    .legend{
+      position:absolute;
+      left:16px;
+      bottom:16px;
+      z-index:3000;
+      padding:14px 16px;
+      border-radius:18px;
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      backdrop-filter:blur(12px);
+      box-shadow:var(--shadow);
+      min-width:220px;
     }
 
-    .legend-title {
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 10px;
-      color: var(--text);
-      letter-spacing: 0.4px;
+    .legend-title{
+      font-size:12px;
+      font-weight:800;
+      margin-bottom:10px;
     }
 
-    .legend-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 8px;
+    .legend-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+      color:var(--muted);
+      font-size:12px;
     }
 
-    .legend-row:last-child {
-      margin-bottom: 0;
+    .legend-row:last-child{
+      margin-bottom:0;
     }
 
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    .legend-dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      flex-shrink:0;
     }
 
-    .legend-dot.ddos { background: var(--danger); box-shadow: 0 0 12px rgba(255,95,122,0.6); }
-    .legend-dot.malware { background: var(--warning); box-shadow: 0 0 12px rgba(255,200,87,0.6); }
-    .legend-dot.intrusion { background: var(--accent-2); box-shadow: 0 0 12px rgba(73,255,180,0.6); }
-
-    .bottom-strip {
-      position: absolute;
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2000;
-      display: flex;
-      gap: 10px;
-      background: rgba(7, 17, 29, 0.72);
-      border: 1px solid var(--panel-border);
-      border-radius: 18px;
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow);
-      padding: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-      max-width: min(90vw, 780px);
+    .legend-dot.ddos{
+      background:var(--red);
+      box-shadow:0 0 12px rgba(255,95,122,0.75);
     }
 
-    .mini-chip {
-      padding: 8px 12px;
-      font-size: 12px;
-      color: var(--muted);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
+    .legend-dot.malware{
+      background:var(--yellow);
+      box-shadow:0 0 12px rgba(255,200,87,0.75);
     }
 
-    .mini-chip b {
-      color: var(--text);
-      margin-left: 6px;
+    .legend-dot.intrusion{
+      background:var(--green);
+      box-shadow:0 0 12px rgba(87,255,177,0.75);
     }
 
-    .country-popup {
-      min-width: 220px;
+    .country-info-panel{
+      position:absolute;
+      right:16px;
+      bottom:16px;
+      z-index:3000;
+      width:360px;
+      padding:16px;
+      border-radius:20px;
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      backdrop-filter:blur(14px);
+      box-shadow:var(--shadow);
     }
 
-    .country-popup h3 {
-      font-size: 15px;
-      margin-bottom: 6px;
-      color: #fff;
+    .country-info-title{
+      font-size:15px;
+      font-weight:800;
+      margin-bottom:10px;
     }
 
-    .country-popup p {
-      font-size: 12px;
-      line-height: 1.45;
-      color: #d9e6ff;
-      margin-bottom: 6px;
+    .country-info-content{
+      font-size:13px;
+      line-height:1.55;
+      color:#d4e2f4;
     }
 
-    .country-popup strong {
-      color: #fff;
+    .leaflet-control-container .leaflet-top.leaflet-left{
+      top:92px;
+      left:16px;
     }
 
-    .leaflet-control-container .leaflet-top.leaflet-left {
-      top: 96px;
-      left: 18px;
+    .leaflet-control-zoom{
+      border:none !important;
+      box-shadow:none !important;
     }
 
-    .leaflet-control-zoom {
-      border: none !important;
-      box-shadow: none !important;
-      overflow: visible !important;
-      margin: 0 !important;
+    .leaflet-control-zoom a{
+      width:46px !important;
+      height:46px !important;
+      line-height:46px !important;
+      border-radius:14px !important;
+      margin-bottom:10px !important;
+      background:var(--panel) !important;
+      color:var(--text) !important;
+      border:1px solid var(--panel-border) !important;
+      box-shadow:var(--shadow) !important;
+      font-size:22px !important;
+      backdrop-filter:blur(12px);
     }
 
-    .leaflet-control-zoom a {
-      width: 44px !important;
-      height: 44px !important;
-      line-height: 44px !important;
-      text-align: center !important;
-      border-radius: 14px !important;
-      margin-bottom: 10px !important;
-      background: var(--panel) !important;
-      color: var(--text) !important;
-      border: 1px solid var(--panel-border) !important;
-      backdrop-filter: blur(12px);
-      font-size: 22px !important;
-      box-shadow: var(--shadow);
+    .leaflet-control-attribution{
+      display:none !important;
     }
 
-    .leaflet-control-attribution {
-      display: none !important;
+    .attack-node{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,0.75);
     }
 
-    .pulse-marker {
-      width: 14px;
-      height: 14px;
-      background: rgba(63, 208, 255, 0.95);
-      border: 2px solid rgba(255,255,255,0.95);
-      border-radius: 50%;
-      box-shadow: 0 0 0 rgba(63,208,255,0.65);
-      animation: markerPulse 1.8s infinite;
+    .attack-node.ddos{
+      background:var(--red);
+      box-shadow:0 0 12px rgba(255,95,122,0.85);
     }
 
-    .attack-node {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.7);
-      box-shadow: 0 0 12px rgba(255,255,255,0.15);
+    .attack-node.malware{
+      background:var(--yellow);
+      box-shadow:0 0 12px rgba(255,200,87,0.85);
     }
 
-    .attack-node.ddos {
-      background: var(--danger);
-      box-shadow: 0 0 14px rgba(255,95,122,0.8);
+    .attack-node.intrusion{
+      background:var(--green);
+      box-shadow:0 0 12px rgba(87,255,177,0.85);
     }
 
-    .attack-node.malware {
-      background: var(--warning);
-      box-shadow: 0 0 14px rgba(255,200,87,0.8);
+    .pulse-marker{
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background:rgba(79,215,255,0.95);
+      border:2px solid rgba(255,255,255,0.95);
+      animation:markerPulse 1.6s infinite;
     }
 
-    .attack-node.intrusion {
-      background: var(--accent-2);
-      box-shadow: 0 0 14px rgba(73,255,180,0.8);
+    .capital-dot{
+      width:5px;
+      height:5px;
+      border-radius:50%;
+      background:#bfe9ff;
+      box-shadow:0 0 8px rgba(191,233,255,0.85);
     }
 
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.18); opacity: 0.85; }
-      100% { transform: scale(1); opacity: 1; }
+    .country-popup h3{
+      font-size:15px;
+      margin-bottom:6px;
+      color:#fff;
     }
 
-    @keyframes markerPulse {
-      0% { box-shadow: 0 0 0 0 rgba(63,208,255,0.55); }
-      70% { box-shadow: 0 0 0 18px rgba(63,208,255,0); }
-      100% { box-shadow: 0 0 0 0 rgba(63,208,255,0); }
+    .country-popup p{
+      font-size:12px;
+      color:#d5e5f9;
+      line-height:1.45;
+      margin-bottom:5px;
     }
 
-    @media (max-width: 1100px) {
-      .topbar {
-        flex-direction: column;
-        align-items: stretch;
+    @keyframes softPulse{
+      0%{transform:scale(1);opacity:1;}
+      50%{transform:scale(1.18);opacity:0.82;}
+      100%{transform:scale(1);opacity:1;}
+    }
+
+    @keyframes markerPulse{
+      0%{box-shadow:0 0 0 0 rgba(79,215,255,0.55);}
+      70%{box-shadow:0 0 0 18px rgba(79,215,255,0);}
+      100%{box-shadow:0 0 0 0 rgba(79,215,255,0);}
+    }
+
+    @media (max-width:1100px){
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
       }
 
-      .top-stats {
-        justify-content: flex-start;
+      .stats{
+        justify-content:flex-start;
       }
 
-      .side-panel {
-        width: calc(100vw - 36px);
-        top: auto;
-        bottom: 92px;
-        right: 18px;
-        max-height: 38vh;
+      .side-panel{
+        width:calc(100vw - 32px);
+        top:auto;
+        bottom:180px;
+        max-height:30vh;
       }
 
-      .bottom-strip {
-        display: none;
+      .country-info-panel{
+        width:calc(100vw - 32px);
       }
     }
 
-    @media (max-width: 720px) {
-      .brand {
-        min-width: unset;
+    @media (max-width:720px){
+      .stats{
+        display:grid;
+        grid-template-columns:repeat(2,1fr);
       }
 
-      .top-stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .stat-card {
-        min-width: unset;
-      }
-
-      .legend-box {
-        display: none;
+      .legend{
+        display:none;
       }
     }
   </style>
@@ -509,51 +487,54 @@
 
   <div class="topbar">
     <div class="brand">
-      <div class="brand-dot"></div>
+      <div class="brand-pulse"></div>
       <div>
         <h1>Live Cyber Threat Map</h1>
-        <p>Real-time visualization of global attack traffic</p>
+        <p>Global malicious traffic visualization</p>
       </div>
     </div>
 
-    <div class="top-stats">
-      <div class="stat-card">
+    <div class="stats">
+      <div class="stat">
         <div class="stat-label">Live attacks</div>
-        <div class="stat-value" id="liveAttacks">1,284</div>
-        <div class="stat-sub">Events refreshing continuously</div>
+        <div class="stat-value" id="liveAttacks">0</div>
+        <div class="stat-sub">Simulated continuously</div>
       </div>
-      <div class="stat-card">
+
+      <div class="stat">
         <div class="stat-label">Top vector</div>
         <div class="stat-value" id="topVector">DDoS</div>
-        <div class="stat-sub">Most visible threat right now</div>
+        <div class="stat-sub">Most visible right now</div>
       </div>
-      <div class="stat-card">
+
+      <div class="stat">
         <div class="stat-label">Countries hit</div>
-        <div class="stat-value" id="countriesHit">47</div>
-        <div class="stat-sub">Affected destinations in view</div>
+        <div class="stat-value" id="countriesHit">0</div>
+        <div class="stat-sub">Current active destinations</div>
       </div>
-      <div class="stat-card">
+
+      <div class="stat">
         <div class="stat-label">Peak intensity</div>
-        <div class="stat-value" id="peakIntensity">92%</div>
-        <div class="stat-sub">High concentration of traffic</div>
+        <div class="stat-value" id="peakIntensity">0%</div>
+        <div class="stat-sub">Highest recent load</div>
       </div>
     </div>
 
-    <div class="right-tools">
-      <button class="tool-btn" id="themeBtn" title="Mode focus">◐</button>
+    <div class="toolbox">
       <button class="tool-btn" id="recenterBtn" title="Recentrer">⌖</button>
+      <button class="tool-btn" id="densityBtn" title="Mode dense">⚡</button>
     </div>
   </div>
 
   <aside class="side-panel">
     <div class="panel-header">
       <div class="panel-title">Recent attack feed</div>
-      <div class="panel-subtitle">Latest simulated flows across the globe</div>
+      <div class="panel-subtitle">High-frequency activity stream</div>
     </div>
     <div class="feed" id="feed"></div>
   </aside>
 
-  <div class="legend-box">
+  <div class="legend">
     <div class="legend-title">Threat vectors</div>
     <div class="legend-row">
       <span class="legend-dot ddos"></span>
@@ -565,56 +546,20 @@
     </div>
     <div class="legend-row">
       <span class="legend-dot intrusion"></span>
-      <span>Intrusion / suspicious access</span>
+      <span>Intrusion / hostile access</span>
     </div>
   </div>
 
-  <div class="bottom-strip">
-    <div class="mini-chip">North America <b id="naCount">214</b></div>
-    <div class="mini-chip">Europe <b id="euCount">183</b></div>
-    <div class="mini-chip">Middle East <b id="meCount">91</b></div>
-    <div class="mini-chip">Asia Pacific <b id="apacCount">264</b></div>
-    <div class="mini-chip">Latin America <b id="latamCount">77</b></div>
-    <div class="mini-chip">Africa <b id="africaCount">56</b></div>
+  <div class="country-info-panel">
+    <div class="country-info-title">Country information</div>
+    <div class="country-info-content" id="countryInfoContent">
+      Clique sur un pays pour afficher ses informations détaillées.
+    </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    const worldPoints = [
-      { name: "New York, US", country: "United States", lat: 40.7128, lng: -74.0060 },
-      { name: "Los Angeles, US", country: "United States", lat: 34.0522, lng: -118.2437 },
-      { name: "Toronto, CA", country: "Canada", lat: 43.6532, lng: -79.3832 },
-      { name: "Mexico City, MX", country: "Mexico", lat: 19.4326, lng: -99.1332 },
-      { name: "São Paulo, BR", country: "Brazil", lat: -23.5505, lng: -46.6333 },
-      { name: "Buenos Aires, AR", country: "Argentina", lat: -34.6037, lng: -58.3816 },
-      { name: "London, UK", country: "United Kingdom", lat: 51.5074, lng: -0.1278 },
-      { name: "Paris, FR", country: "France", lat: 48.8566, lng: 2.3522 },
-      { name: "Frankfurt, DE", country: "Germany", lat: 50.1109, lng: 8.6821 },
-      { name: "Madrid, ES", country: "Spain", lat: 40.4168, lng: -3.7038 },
-      { name: "Rome, IT", country: "Italy", lat: 41.9028, lng: 12.4964 },
-      { name: "Istanbul, TR", country: "Turkey", lat: 41.0082, lng: 28.9784 },
-      { name: "Manama, BH", country: "Bahrain", lat: 26.2235, lng: 50.5876 },
-      { name: "Dubai, UAE", country: "United Arab Emirates", lat: 25.2048, lng: 55.2708 },
-      { name: "Riyadh, SA", country: "Saudi Arabia", lat: 24.7136, lng: 46.6753 },
-      { name: "Cairo, EG", country: "Egypt", lat: 30.0444, lng: 31.2357 },
-      { name: "Lagos, NG", country: "Nigeria", lat: 6.5244, lng: 3.3792 },
-      { name: "Johannesburg, ZA", country: "South Africa", lat: -26.2041, lng: 28.0473 },
-      { name: "Mumbai, IN", country: "India", lat: 19.0760, lng: 72.8777 },
-      { name: "Delhi, IN", country: "India", lat: 28.6139, lng: 77.2090 },
-      { name: "Singapore, SG", country: "Singapore", lat: 1.3521, lng: 103.8198 },
-      { name: "Tokyo, JP", country: "Japan", lat: 35.6762, lng: 139.6503 },
-      { name: "Seoul, KR", country: "South Korea", lat: 37.5665, lng: 126.9780 },
-      { name: "Hong Kong, HK", country: "Hong Kong", lat: 22.3193, lng: 114.1694 },
-      { name: "Sydney, AU", country: "Australia", lat: -33.8688, lng: 151.2093 }
-    ];
-
-    const attackTypes = [
-      { type: "DDoS", className: "ddos", color: "#ff5f7a" },
-      { type: "Malware", className: "malware", color: "#ffc857" },
-      { type: "Intrusion", className: "intrusion", color: "#49ffb4" }
-    ];
-
     const map = L.map("map", {
       zoomControl: true,
       worldCopyJump: true,
@@ -622,7 +567,7 @@
       maxZoom: 6,
       zoomSnap: 0.5,
       zoomDelta: 0.5
-    }).setView([24, 10], 2.2);
+    }).setView([24, 8], 2.2);
 
     L.tileLayer(
       "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
@@ -636,31 +581,124 @@
     const arcsLayer = L.layerGroup().addTo(map);
     const nodesLayer = L.layerGroup().addTo(map);
     const pulseLayer = L.layerGroup().addTo(map);
+    const capitalsLayer = L.layerGroup().addTo(map);
 
-    function curvedLine(latlng1, latlng2, offset = 12) {
-      const midLat = (latlng1[0] + latlng2[0]) / 2 + (Math.random() * offset - offset / 2);
-      const midLng = (latlng1[1] + latlng2[1]) / 2 + (Math.random() * offset - offset / 2);
-      return [latlng1, [midLat, midLng], latlng2];
-    }
+    const attackTypes = [
+      { type: "DDoS", className: "ddos", color: "#ff5f7a" },
+      { type: "Malware", className: "malware", color: "#ffc857" },
+      { type: "Intrusion", className: "intrusion", color: "#57ffb1" }
+    ];
 
-    function getRandomItem(arr) {
+    const capitals = [
+      { name:"Washington", country:"United States of America", lat:38.9072, lng:-77.0369 },
+      { name:"Ottawa", country:"Canada", lat:45.4215, lng:-75.6972 },
+      { name:"Mexico City", country:"Mexico", lat:19.4326, lng:-99.1332 },
+      { name:"Brasília", country:"Brazil", lat:-15.7939, lng:-47.8828 },
+      { name:"Buenos Aires", country:"Argentina", lat:-34.6037, lng:-58.3816 },
+      { name:"London", country:"United Kingdom", lat:51.5074, lng:-0.1278 },
+      { name:"Paris", country:"France", lat:48.8566, lng:2.3522 },
+      { name:"Berlin", country:"Germany", lat:52.52, lng:13.405 },
+      { name:"Madrid", country:"Spain", lat:40.4168, lng:-3.7038 },
+      { name:"Rome", country:"Italy", lat:41.9028, lng:12.4964 },
+      { name:"Ankara", country:"Turkey", lat:39.9334, lng:32.8597 },
+      { name:"Moscow", country:"Russia", lat:55.7558, lng:37.6173 },
+      { name:"Kyiv", country:"Ukraine", lat:50.4501, lng:30.5234 },
+      { name:"Cairo", country:"Egypt", lat:30.0444, lng:31.2357 },
+      { name:"Algiers", country:"Algeria", lat:36.7538, lng:3.0588 },
+      { name:"Rabat", country:"Morocco", lat:34.0209, lng:-6.8416 },
+      { name:"Tunis", country:"Tunisia", lat:36.8065, lng:10.1815 },
+      { name:"Tripoli", country:"Libya", lat:32.8872, lng:13.1913 },
+      { name:"Riyadh", country:"Saudi Arabia", lat:24.7136, lng:46.6753 },
+      { name:"Manama", country:"Bahrain", lat:26.2235, lng:50.5876 },
+      { name:"Doha", country:"Qatar", lat:25.2854, lng:51.5310 },
+      { name:"Abu Dhabi", country:"United Arab Emirates", lat:24.4539, lng:54.3773 },
+      { name:"Kuwait City", country:"Kuwait", lat:29.3759, lng:47.9774 },
+      { name:"Tehran", country:"Iran", lat:35.6892, lng:51.3890 },
+      { name:"Baghdad", country:"Iraq", lat:33.3152, lng:44.3661 },
+      { name:"Jerusalem", country:"Israel", lat:31.7683, lng:35.2137 },
+      { name:"Beirut", country:"Lebanon", lat:33.8938, lng:35.5018 },
+      { name:"Amman", country:"Jordan", lat:31.9539, lng:35.9106 },
+      { name:"New Delhi", country:"India", lat:28.6139, lng:77.2090 },
+      { name:"Islamabad", country:"Pakistan", lat:33.6844, lng:73.0479 },
+      { name:"Dhaka", country:"Bangladesh", lat:23.8103, lng:90.4125 },
+      { name:"Kathmandu", country:"Nepal", lat:27.7172, lng:85.3240 },
+      { name:"Beijing", country:"China", lat:39.9042, lng:116.4074 },
+      { name:"Seoul", country:"South Korea", lat:37.5665, lng:126.9780 },
+      { name:"Tokyo", country:"Japan", lat:35.6762, lng:139.6503 },
+      { name:"Taipei", country:"Taiwan", lat:25.0330, lng:121.5654 },
+      { name:"Bangkok", country:"Thailand", lat:13.7563, lng:100.5018 },
+      { name:"Hanoi", country:"Vietnam", lat:21.0278, lng:105.8342 },
+      { name:"Jakarta", country:"Indonesia", lat:-6.2088, lng:106.8456 },
+      { name:"Kuala Lumpur", country:"Malaysia", lat:3.1390, lng:101.6869 },
+      { name:"Singapore", country:"Singapore", lat:1.3521, lng:103.8198 },
+      { name:"Manila", country:"Philippines", lat:14.5995, lng:120.9842 },
+      { name:"Canberra", country:"Australia", lat:-35.2809, lng:149.1300 },
+      { name:"Wellington", country:"New Zealand", lat:-41.2865, lng:174.7762 },
+      { name:"Pretoria", country:"South Africa", lat:-25.7479, lng:28.2293 },
+      { name:"Abuja", country:"Nigeria", lat:9.0765, lng:7.3986 },
+      { name:"Nairobi", country:"Kenya", lat:-1.2864, lng:36.8172 },
+      { name:"Addis Ababa", country:"Ethiopia", lat:8.9806, lng:38.7578 },
+      { name:"Accra", country:"Ghana", lat:5.6037, lng:-0.1870 },
+      { name:"Dakar", country:"Senegal", lat:14.7167, lng:-17.4677 }
+    ];
+
+    capitals.forEach((point) => {
+      const icon = L.divIcon({
+        className:"",
+        html:`<div class="capital-dot"></div>`,
+        iconSize:[5,5],
+        iconAnchor:[2.5,2.5]
+      });
+
+      const marker = L.marker([point.lat, point.lng], { icon }).addTo(capitalsLayer);
+
+      marker.bindPopup(`
+        <div class="country-popup">
+          <h3>${point.country}</h3>
+          <p><strong>Capital node:</strong> ${point.name}</p>
+          <p>Global traffic monitoring point.</p>
+        </div>
+      `);
+    });
+
+    function randomItem(arr){
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function randomInt(min, max) {
+    function randomInt(min,max){
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    function formatNumber(num) {
+    function formatNumber(num){
       return num.toLocaleString("fr-FR");
     }
 
-    function attackIntensity() {
-      return randomInt(48, 99);
+    function makeNode(point, attack){
+      const icon = L.divIcon({
+        className:"",
+        html:`<div class="attack-node ${attack.className}"></div>`,
+        iconSize:[8,8],
+        iconAnchor:[4,4]
+      });
+
+      return L.marker([point.lat, point.lng], { icon });
     }
 
-    function attackPacketRate() {
-      return `${randomInt(40, 980)} Gbps`;
+    function makePulse(point){
+      const icon = L.divIcon({
+        className:"",
+        html:`<div class="pulse-marker"></div>`,
+        iconSize:[12,12],
+        iconAnchor:[6,6]
+      });
+
+      return L.marker([point.lat, point.lng], { icon });
+    }
+
+    function curvedLine(latlng1, latlng2){
+      const midLat = (latlng1[0] + latlng2[0]) / 2 + (Math.random() * 18 - 9);
+      const midLng = (latlng1[1] + latlng2[1]) / 2 + (Math.random() * 22 - 11);
+      return [latlng1, [midLat, midLng], latlng2];
     }
 
     const feed = document.getElementById("feed");
@@ -668,24 +706,28 @@
     const topVectorEl = document.getElementById("topVector");
     const countriesHitEl = document.getElementById("countriesHit");
     const peakIntensityEl = document.getElementById("peakIntensity");
+    const countryInfoContent = document.getElementById("countryInfoContent");
 
-    let liveAttackCounter = 1284;
-    let vectorCount = {
-      DDoS: 0,
-      Malware: 0,
-      Intrusion: 0
+    let liveAttackCounter = 0;
+    let topVectorStats = {
+      DDoS:0,
+      Malware:0,
+      Intrusion:0
     };
 
-    function addFeedItem(source, target, attack, intensity, rate) {
-      const item = document.createElement("div");
-      item.className = "feed-item";
+    const activeTargetCountries = new Set();
+    let currentPeak = 0;
+    let denseMode = true;
 
+    function addFeedItem(source, target, attack, intensity, rate){
       const time = new Date().toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
+        hour:"2-digit",
+        minute:"2-digit",
+        second:"2-digit"
       });
 
+      const item = document.createElement("div");
+      item.className = "feed-item";
       item.innerHTML = `
         <div class="feed-top">
           <span class="badge ${attack.className}">${attack.type}</span>
@@ -700,148 +742,206 @@
 
       feed.prepend(item);
 
-      while (feed.children.length > 14) {
+      while(feed.children.length > 18){
         feed.removeChild(feed.lastChild);
       }
     }
 
-    function makeNode(point, attack) {
-      const icon = L.divIcon({
-        className: "",
-        html: `<div class="attack-node ${attack.className}"></div>`,
-        iconSize: [10, 10],
-        iconAnchor: [5, 5]
-      });
+    function updateStats(attackType, targetCountry, intensity){
+      liveAttackCounter += randomInt(2,8);
+      topVectorStats[attackType] += 1;
+      activeTargetCountries.add(targetCountry);
 
-      return L.marker([point.lat, point.lng], { icon });
-    }
-
-    function makePulse(point) {
-      const icon = L.divIcon({
-        className: "",
-        html: `<div class="pulse-marker"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7]
-      });
-
-      return L.marker([point.lat, point.lng], { icon });
-    }
-
-    function createAttack() {
-      const source = getRandomItem(worldPoints);
-      let target = getRandomItem(worldPoints);
-
-      while (target.name === source.name) {
-        target = getRandomItem(worldPoints);
+      if(intensity > currentPeak){
+        currentPeak = intensity;
       }
 
-      const attack = getRandomItem(attackTypes);
-      const intensity = attackIntensity();
-      const rate = attackPacketRate();
+      liveAttacksEl.textContent = formatNumber(liveAttackCounter);
+      countriesHitEl.textContent = activeTargetCountries.size;
+      peakIntensityEl.textContent = `${currentPeak}%`;
 
-      const curve = curvedLine([source.lat, source.lng], [target.lat, target.lng], 18);
+      const sorted = Object.entries(topVectorStats).sort((a,b) => b[1] - a[1]);
+      topVectorEl.textContent = sorted[0][0];
+    }
+
+    function createAttack(){
+      const source = randomItem(capitals);
+      let target = randomItem(capitals);
+
+      while(target.country === source.country){
+        target = randomItem(capitals);
+      }
+
+      const attack = randomItem(attackTypes);
+      const intensity = randomInt(55, 99);
+      const rate = `${randomInt(60, 980)} Gbps`;
+
+      const curve = curvedLine([source.lat, source.lng], [target.lat, target.lng]);
 
       const polyline = L.polyline(curve, {
         color: attack.color,
-        weight: 2,
-        opacity: 0.9,
-        smoothFactor: 1.4
+        weight: 1.5,
+        opacity: 0.42,
+        smoothFactor: 1.3
       }).addTo(arcsLayer);
 
       const sourceNode = makeNode(source, attack).addTo(nodesLayer);
       const targetNode = makeNode(target, attack).addTo(nodesLayer);
       const pulse = makePulse(target).addTo(pulseLayer);
 
-      const popupHtml = `
-        <div class="country-popup">
-          <h3>${target.country}</h3>
-          <p><strong>Target city:</strong> ${target.name}</p>
-          <p><strong>Threat type:</strong> ${attack.type}</p>
-          <p><strong>Intensity:</strong> ${intensity}%</p>
-          <p><strong>Estimated traffic:</strong> ${rate}</p>
-          <p><strong>Source:</strong> ${source.name}</p>
-        </div>
-      `;
-
-      targetNode.bindPopup(popupHtml);
-
       addFeedItem(source, target, attack, intensity, rate);
-
-      liveAttackCounter += randomInt(1, 5);
-      vectorCount[attack.type] += 1;
-
-      liveAttacksEl.textContent = formatNumber(liveAttackCounter);
-      peakIntensityEl.textContent = `${Math.max(intensity, randomInt(82, 98))}%`;
-
-      const topVector = Object.entries(vectorCount).sort((a, b) => b[1] - a[1])[0][0];
-      topVectorEl.textContent = topVector;
-
-      const hitCountries = new Set(Array.from(feed.children).map(card => {
-        const text = card.querySelector(".feed-route").textContent;
-        return text.split("→")[1].trim();
-      }));
-      countriesHitEl.textContent = hitCountries.size;
+      updateStats(attack.type, target.country, intensity);
 
       setTimeout(() => {
         arcsLayer.removeLayer(polyline);
         nodesLayer.removeLayer(sourceNode);
         nodesLayer.removeLayer(targetNode);
         pulseLayer.removeLayer(pulse);
-      }, 4200);
+      }, 8500);
     }
 
-    worldPoints.forEach((point) => {
-      const marker = L.circleMarker([point.lat, point.lng], {
-        radius: 2.6,
-        color: "#9fd3ff",
-        weight: 0.8,
-        fillColor: "#9fd3ff",
-        fillOpacity: 0.75
-      }).addTo(map);
-
-      marker.bindPopup(`
-        <div class="country-popup">
-          <h3>${point.country}</h3>
-          <p><strong>Node:</strong> ${point.name}</p>
-          <p>Monitored traffic relay on the global map.</p>
-        </div>
-      `);
-    });
-
-    for (let i = 0; i < 8; i++) {
-      setTimeout(createAttack, i * 350);
+    function attackBurst(){
+      const amount = denseMode ? 9 : 4;
+      for(let i = 0; i < amount; i++){
+        createAttack();
+      }
     }
 
-    setInterval(createAttack, 900);
+    for(let i = 0; i < 20; i++){
+      setTimeout(() => attackBurst(), i * 180);
+    }
+
+    setInterval(() => {
+      attackBurst();
+    }, 350);
 
     document.getElementById("recenterBtn").addEventListener("click", () => {
-      map.setView([24, 10], 2.2, { animate: true });
+      map.setView([24, 8], 2.2, { animate:true });
     });
 
-    let focusMode = false;
-    document.getElementById("themeBtn").addEventListener("click", () => {
-      focusMode = !focusMode;
-      document.documentElement.style.setProperty(
-        "--panel",
-        focusMode ? "rgba(3, 10, 18, 0.92)" : "rgba(8, 19, 33, 0.84)"
-      );
-      document.documentElement.style.setProperty(
-        "--panel-border",
-        focusMode ? "rgba(63, 208, 255, 0.26)" : "rgba(120, 170, 220, 0.18)"
-      );
+    document.getElementById("densityBtn").addEventListener("click", () => {
+      denseMode = !denseMode;
+      document.getElementById("densityBtn").textContent = denseMode ? "⚡" : "•";
     });
 
-    function refreshRegionStats() {
-      document.getElementById("naCount").textContent = randomInt(180, 260);
-      document.getElementById("euCount").textContent = randomInt(140, 210);
-      document.getElementById("meCount").textContent = randomInt(70, 120);
-      document.getElementById("apacCount").textContent = randomInt(220, 310);
-      document.getElementById("latamCount").textContent = randomInt(50, 95);
-      document.getElementById("africaCount").textContent = randomInt(30, 75);
+    let countriesLayer = null;
+    let selectedCountryLayer = null;
+
+    function styleCountry(){
+      return {
+        color:"rgba(111,175,230,0.32)",
+        weight:1,
+        fillColor:"#21507a",
+        fillOpacity:0.08
+      };
     }
 
-    refreshRegionStats();
-    setInterval(refreshRegionStats, 3500);
+    function styleSelectedCountry(){
+      return {
+        color:"#7fe7ff",
+        weight:2,
+        fillColor:"#3fd0ff",
+        fillOpacity:0.30
+      };
+    }
+
+    function normalizeCountryName(name){
+      const aliases = {
+        "United States":"United States of America",
+        "USA":"United States of America",
+        "Russian Federation":"Russia",
+        "Korea, Republic of":"South Korea",
+        "Republic of Korea":"South Korea",
+        "Iran, Islamic Republic of":"Iran",
+        "Syrian Arab Republic":"Syria",
+        "Viet Nam":"Vietnam",
+        "Czechia":"Czech Republic",
+        "Türkiye":"Turkey"
+      };
+      return aliases[name] || name;
+    }
+
+    function generateCountryStats(countryName){
+      const topCities = capitals.filter(c => normalizeCountryName(c.country) === normalizeCountryName(countryName));
+      const cityName = topCities.length ? randomItem(topCities).name : "Major infrastructure";
+
+      const attack = randomItem(attackTypes);
+      const attacks = randomInt(34, 420);
+      const intensity = randomInt(60, 98);
+      const sourceCountries = [];
+      while(sourceCountries.length < 3){
+        const c = randomItem(capitals).country;
+        if(c !== countryName && !sourceCountries.includes(c)){
+          sourceCountries.push(c);
+        }
+      }
+
+      return {
+        attacks,
+        mainType: attack.type,
+        city: cityName,
+        intensity,
+        sources: sourceCountries.join(" / ")
+      };
+    }
+
+    function updateCountryPanel(countryName){
+      const stats = generateCountryStats(countryName);
+      countryInfoContent.innerHTML = `
+        <strong>${countryName}</strong><br><br>
+        Attacks detected: <strong>${stats.attacks}</strong><br>
+        Main attack type: <strong>${stats.mainType}</strong><br>
+        Top targeted city: <strong>${stats.city}</strong><br>
+        Peak intensity: <strong>${stats.intensity}%</strong><br>
+        Source regions: <strong>${stats.sources}</strong>
+      `;
+    }
+
+    function onEachCountry(feature, layer){
+      const countryName = feature.properties.name || "Unknown country";
+
+      layer.on("mouseover", function(){
+        if(selectedCountryLayer !== layer){
+          layer.setStyle({
+            fillOpacity:0.16,
+            weight:1.2
+          });
+        }
+      });
+
+      layer.on("mouseout", function(){
+        if(selectedCountryLayer !== layer && countriesLayer){
+          countriesLayer.resetStyle(layer);
+        }
+      });
+
+      layer.on("click", function(){
+        if(selectedCountryLayer && countriesLayer){
+          countriesLayer.resetStyle(selectedCountryLayer);
+        }
+
+        selectedCountryLayer = layer;
+        layer.setStyle(styleSelectedCountry());
+        layer.bringToFront();
+        updateCountryPanel(countryName);
+      });
+    }
+
+    fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json")
+      .then(response => response.json())
+      .then(geojson => {
+        countriesLayer = L.geoJSON(geojson, {
+          style: styleCountry,
+          onEachFeature: onEachCountry
+        }).addTo(map);
+      })
+      .catch(err => {
+        console.error("Erreur chargement GeoJSON :", err);
+        countryInfoContent.innerHTML = `
+          <strong>Erreur de chargement</strong><br><br>
+          Impossible de charger la couche complète des pays.
+        `;
+      });
   </script>
 </body>
 </html>
