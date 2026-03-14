@@ -165,12 +165,38 @@
       border-color:rgba(127,231,255,0.5);
     }
 
-    .side-panel{
+    .country-info-panel{
       position:absolute;
       top:92px;
       right:16px;
+      z-index:3001;
       width:360px;
-      max-height:calc(100vh - 235px);
+      padding:16px;
+      border-radius:20px;
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      backdrop-filter:blur(14px);
+      box-shadow:var(--shadow);
+    }
+
+    .country-info-title{
+      font-size:15px;
+      font-weight:800;
+      margin-bottom:10px;
+    }
+
+    .country-info-content{
+      font-size:13px;
+      line-height:1.55;
+      color:#d4e2f4;
+    }
+
+    .side-panel{
+      position:absolute;
+      top:255px;
+      right:16px;
+      width:360px;
+      max-height:calc(100vh - 271px);
       z-index:3000;
       background:var(--panel);
       border:1px solid var(--panel-border);
@@ -330,32 +356,6 @@
       box-shadow:0 0 12px rgba(87,255,177,0.75);
     }
 
-    .country-info-panel{
-      position:absolute;
-      right:16px;
-      bottom:16px;
-      z-index:3000;
-      width:360px;
-      padding:16px;
-      border-radius:20px;
-      background:var(--panel);
-      border:1px solid var(--panel-border);
-      backdrop-filter:blur(14px);
-      box-shadow:var(--shadow);
-    }
-
-    .country-info-title{
-      font-size:15px;
-      font-weight:800;
-      margin-bottom:10px;
-    }
-
-    .country-info-content{
-      font-size:13px;
-      line-height:1.55;
-      color:#d4e2f4;
-    }
-
     .leaflet-control-container .leaflet-top.leaflet-left{
       top:92px;
       left:16px;
@@ -458,15 +458,15 @@
         justify-content:flex-start;
       }
 
-      .side-panel{
-        width:calc(100vw - 32px);
-        top:auto;
-        bottom:180px;
-        max-height:30vh;
-      }
-
       .country-info-panel{
         width:calc(100vw - 32px);
+      }
+
+      .side-panel{
+        width:calc(100vw - 32px);
+        top:260px;
+        bottom:auto;
+        max-height:28vh;
       }
     }
 
@@ -526,6 +526,13 @@
     </div>
   </div>
 
+  <div class="country-info-panel">
+    <div class="country-info-title">Country information</div>
+    <div class="country-info-content" id="countryInfoContent">
+      Clique sur un pays pour afficher ses informations détaillées.
+    </div>
+  </div>
+
   <aside class="side-panel">
     <div class="panel-header">
       <div class="panel-title">Recent attack feed</div>
@@ -547,13 +554,6 @@
     <div class="legend-row">
       <span class="legend-dot intrusion"></span>
       <span>Intrusion / hostile access</span>
-    </div>
-  </div>
-
-  <div class="country-info-panel">
-    <div class="country-info-title">Country information</div>
-    <div class="country-info-content" id="countryInfoContent">
-      Clique sur un pays pour afficher ses informations détaillées.
     </div>
   </div>
 
@@ -845,24 +845,8 @@
       };
     }
 
-    function normalizeCountryName(name){
-      const aliases = {
-        "United States":"United States of America",
-        "USA":"United States of America",
-        "Russian Federation":"Russia",
-        "Korea, Republic of":"South Korea",
-        "Republic of Korea":"South Korea",
-        "Iran, Islamic Republic of":"Iran",
-        "Syrian Arab Republic":"Syria",
-        "Viet Nam":"Vietnam",
-        "Czechia":"Czech Republic",
-        "Türkiye":"Turkey"
-      };
-      return aliases[name] || name;
-    }
-
     function generateCountryStats(countryName){
-      const topCities = capitals.filter(c => normalizeCountryName(c.country) === normalizeCountryName(countryName));
+      const topCities = capitals.filter(c => c.country === countryName);
       const cityName = topCities.length ? randomItem(topCities).name : "Major infrastructure";
 
       const attack = randomItem(attackTypes);
@@ -924,6 +908,14 @@
         layer.setStyle(styleSelectedCountry());
         layer.bringToFront();
         updateCountryPanel(countryName);
+
+        const bounds = layer.getBounds();
+        map.fitBounds(bounds, {
+          padding: [60, 60],
+          maxZoom: 5,
+          animate: true,
+          duration: 1
+        });
       });
     }
 
