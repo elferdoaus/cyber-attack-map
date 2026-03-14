@@ -1,1356 +1,1474 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cyber Threat Map | Portfolio Project</title>
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-  <style>
-    :root{
-      --bg:#edf2f7;
-      --panel:rgba(255,255,255,0.94);
-      --panel-strong:rgba(255,255,255,0.98);
-      --panel-border:rgba(24,40,62,0.08);
-      --text:#162538;
-      --muted:#66778c;
-      --accent:#456b93;
-      --accent-soft:#8fa1b6;
-      --danger:#c76666;
-      --danger-soft:rgba(199,102,102,0.20);
-      --success:#648676;
-      --warning:#ba9355;
-      --blue-soft:rgba(69,107,147,0.18);
-      --shadow:0 18px 44px rgba(18,31,50,0.12);
-      --shadow-soft:0 8px 22px rgba(18,31,50,0.08);
-      --radius-xl:24px;
-      --radius-lg:18px;
-      --radius-md:14px;
-    }
-
-    *{
-      box-sizing:border-box;
-    }
-
-    html, body{
-      width:100%;
-      height:100%;
-      margin:0;
-      padding:0;
-      overflow:hidden;
-      font-family:Inter, Arial, sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      background:
-        radial-gradient(circle at top left, rgba(69,107,147,0.06), transparent 28%),
-        radial-gradient(circle at top right, rgba(199,102,102,0.04), transparent 22%),
-        radial-gradient(circle at bottom center, rgba(100,134,118,0.04), transparent 22%);
-      pointer-events:none;
-      z-index:0;
-    }
-
-    #map{
-      position:fixed;
-      inset:0;
-      width:100vw;
-      height:100vh;
-      z-index:1;
-    }
-
-    .glass{
-      background:var(--panel);
-      border:1px solid var(--panel-border);
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
-    }
-
-    .glass-soft{
-      background:var(--panel-strong);
-      border:1px solid rgba(24,40,62,0.06);
-      box-shadow:var(--shadow-soft);
-      backdrop-filter:blur(8px);
-      -webkit-backdrop-filter:blur(8px);
-    }
-
-    .topbar{
-      position:fixed;
-      top:16px;
-      left:16px;
-      right:16px;
-      z-index:1000;
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:16px;
-      pointer-events:none;
-    }
-
-    .hero,
-    .toolbar,
-    .status-box,
-    .sidebar,
-    .legend{
-      pointer-events:auto;
-    }
-
-    .hero{
-      max-width:580px;
-      border-radius:var(--radius-xl);
-      padding:20px 22px;
-    }
-
-    .eyebrow{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      font-size:11px;
-      font-weight:800;
-      letter-spacing:0.08em;
-      text-transform:uppercase;
-      color:var(--accent);
-      margin-bottom:10px;
-    }
-
-    .live-dot{
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background:var(--success);
-      box-shadow:0 0 0 5px rgba(100,134,118,0.14);
-      animation:heroPulse 1.8s infinite;
-    }
-
-    @keyframes heroPulse{
-      0%{transform:scale(1);opacity:1;}
-      50%{transform:scale(1.35);opacity:0.55;}
-      100%{transform:scale(1);opacity:1;}
-    }
-
-    .hero h1{
-      margin:0;
-      font-size:clamp(42px, 5vw, 66px);
-      line-height:0.98;
-      font-weight:850;
-      letter-spacing:-0.035em;
-      color:#112238;
-    }
-
-    .hero p{
-      margin:14px 0 0;
-      font-size:15px;
-      line-height:1.6;
-      color:var(--muted);
-      max-width:470px;
-    }
-
-    .hero-note{
-      margin-top:12px;
-      font-size:13px;
-      font-weight:600;
-      color:var(--muted);
-    }
-
-    .tags{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-top:16px;
-    }
-
-    .tag{
-      padding:8px 12px;
-      border-radius:999px;
-      background:#f4f7fb;
-      border:1px solid rgba(24,40,62,0.07);
-      color:#304961;
-      font-size:12px;
-      font-weight:700;
-      text-decoration:none;
-    }
-
-    .hero-bottom-note{
-      margin-top:14px;
-      font-size:12px;
-      font-weight:700;
-      color:var(--muted);
-    }
-
-    .status-area{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      min-width:470px;
-    }
-
-    .toolbar{
-      border-radius:18px;
-      padding:10px;
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-      align-self:flex-end;
-    }
-
-    .toolbar button{
-      border:none;
-      border-radius:12px;
-      padding:10px 14px;
-      background:#ffffff;
-      color:#18304c;
-      font-weight:800;
-      font-size:12px;
-      cursor:pointer;
-      box-shadow:var(--shadow-soft);
-      transition:all 0.2s ease;
-    }
-
-    .toolbar button:hover{
-      transform:translateY(-1px);
-      box-shadow:0 6px 16px rgba(0,0,0,0.12);
-      background:#f5f8fc;
-    }
-
-    .toolbar button.active{
-      background:#18304c;
-      color:#ffffff;
-    }
-
-    .status-wrap{
-      display:grid;
-      grid-template-columns:repeat(3, minmax(140px, 1fr));
-      gap:12px;
-    }
-
-    .status-box{
-      border-radius:18px;
-      padding:14px 15px;
-      min-height:116px;
-    }
-
-    .status-label{
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:0.08em;
-      color:var(--muted);
-      margin-bottom:8px;
-      font-weight:800;
-    }
-
-    .status-value{
-      font-size:22px;
-      font-weight:850;
-      line-height:1;
-      margin-bottom:8px;
-      color:#13253b;
-    }
-
-    .status-sub{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.4;
-    }
-
-    .sidebar{
-      position:fixed;
-      top:146px;
-      right:16px;
-      width:360px;
-      z-index:1000;
-      border-radius:24px;
-      padding:18px;
-      max-height:calc(100vh - 162px);
-      overflow:auto;
-    }
-
-    .sidebar::-webkit-scrollbar{
-      width:8px;
-    }
-
-    .sidebar::-webkit-scrollbar-thumb{
-      background:rgba(24,40,62,0.12);
-      border-radius:999px;
-    }
-
-    .sidebar-header{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-      margin-bottom:12px;
-    }
-
-    .sidebar h2{
-      margin:0 0 4px;
-      font-size:22px;
-      line-height:1.05;
-      color:#14243a;
-    }
-
-    .sidebar .small{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.45;
-      margin-bottom:14px;
-    }
-
-    .focus-chip{
-      padding:7px 10px;
-      border-radius:999px;
-      background:rgba(69,107,147,0.10);
-      color:#456b93;
-      font-size:11px;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:0.06em;
-      white-space:nowrap;
-    }
-
-    .metric-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-
-    .metric{
-      background:#f6f8fb;
-      border:1px solid rgba(24,40,62,0.05);
-      border-radius:16px;
-      padding:13px;
-    }
-
-    .metric span{
-      display:block;
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:7px;
-    }
-
-    .metric strong{
-      font-size:18px;
-      color:var(--text);
-      line-height:1.2;
-    }
-
-    .divider{
-      height:1px;
-      background:rgba(24,40,62,0.08);
-      margin:16px 0;
-    }
-
-    .list-title{
-      margin:0 0 10px;
-      font-size:15px;
-      font-weight:800;
-      color:#213750;
-    }
-
-    .threat-list,
-    .top-list,
-    .feed-list{
-      margin:0;
-      padding:0;
-      list-style:none;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-
-    .threat-list li,
-    .top-list li{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      padding:12px 13px;
-      border-radius:15px;
-      background:#f6f8fb;
-      border:1px solid rgba(24,40,62,0.05);
-      font-size:13px;
-    }
-
-    .feed-list li{
-      padding:12px 13px;
-      border-radius:15px;
-      background:#f6f8fb;
-      border:1px solid rgba(24,40,62,0.05);
-      font-size:12px;
-      line-height:1.5;
-    }
-
-    .feed-time{
-      font-weight:800;
-      color:#203651;
-      margin-right:6px;
-    }
-
-    .feed-meta{
-      display:block;
-      color:var(--muted);
-      margin-top:5px;
-      font-size:11px;
-    }
-
-    .badge{
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:800;
-      white-space:nowrap;
-    }
-
-    .badge.red{ background:rgba(199,102,102,0.12); color:#a35353; }
-    .badge.blue{ background:rgba(69,107,147,0.12); color:#456b93; }
-    .badge.gold{ background:rgba(186,147,85,0.15); color:#8f6c35; }
-    .badge.green{ background:rgba(100,134,118,0.14); color:#4f6f60; }
-
-    .risk-bar-wrap{
-      margin-top:10px;
-      padding:11px 12px;
-      border-radius:14px;
-      background:#f6f8fb;
-      border:1px solid rgba(24,40,62,0.05);
-    }
-
-    .risk-bar-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:8px;
-    }
-
-    .risk-bar{
-      width:100%;
-      height:10px;
-      border-radius:999px;
-      background:#e7edf4;
-      overflow:hidden;
-    }
-
-    .risk-bar-fill{
-      height:100%;
-      width:0%;
-      border-radius:999px;
-      background:linear-gradient(90deg, #5f7ea0 0%, #ba9355 60%, #c76666 100%);
-      transition:width 0.35s ease;
-    }
-
-    .mini-kpi-row{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-top:12px;
-    }
-
-    .mini-kpi{
-      padding:12px;
-      border-radius:15px;
-      background:#f6f8fb;
-      border:1px solid rgba(24,40,62,0.05);
-    }
-
-    .mini-kpi small{
-      display:block;
-      color:var(--muted);
-      font-size:11px;
-      margin-bottom:6px;
-    }
-
-    .mini-kpi strong{
-      font-size:16px;
-      color:#14243a;
-    }
-
-    .legend{
-      position:fixed;
-      bottom:16px;
-      left:16px;
-      z-index:1000;
-      border-radius:22px;
-      padding:16px;
-      width:250px;
-    }
-
-    .legend h3{
-      margin:0 0 12px;
-      font-size:14px;
-      color:#1a2c43;
-    }
-
-    .legend-row{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-size:13px;
-      color:var(--muted);
-      margin:10px 0;
-      line-height:1.6;
-    }
-
-    .legend-dot{
-      width:11px;
-      height:11px;
-      border-radius:50%;
-      flex-shrink:0;
-    }
-
-    .legend-line{
-      width:24px;
-      height:2px;
-      background:var(--accent);
-      flex-shrink:0;
-    }
-
-    .leaflet-control-container{
-      z-index:2000 !important;
-    }
-
-    .leaflet-control-zoom{
-      border:none !important;
-      box-shadow:var(--shadow) !important;
-      border-radius:16px !important;
-      overflow:hidden;
-    }
-
-    .leaflet-control-zoom a{
-      background:#ffffff !important;
-      color:#16263b !important;
-      border-bottom:1px solid rgba(24,40,62,0.08) !important;
-      width:44px !important;
-      height:44px !important;
-      line-height:44px !important;
-      font-size:19px !important;
-      font-weight:800 !important;
-    }
-
-    .leaflet-bottom.leaflet-left .leaflet-control-zoom{
-      margin-left:16px !important;
-      margin-bottom:168px !important;
-    }
-
-    .leaflet-bottom.leaflet-left .leaflet-control.reset-parent{
-      margin-left:16px !important;
-      margin-bottom:264px !important;
-    }
-
-    .reset-wrapper{
-      margin:0;
-    }
-
-    .reset-control{
-      background:#ffffff;
-      color:#16263b;
-      border:none;
-      width:44px;
-      height:44px;
-      border-radius:16px;
-      cursor:pointer;
-      font-size:18px;
-      box-shadow:var(--shadow);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transition:all 0.2s ease;
-    }
-
-    .reset-control:hover{
-      transform:translateY(-1px);
-      background:#f5f8fc;
-    }
-
-    .leaflet-popup-content-wrapper,
-    .leaflet-popup-tip{
-      background:#ffffff;
-      color:#16263b;
-      border:1px solid rgba(24,40,62,0.08);
-      box-shadow:var(--shadow);
-    }
-
-    .leaflet-tile{
-      filter:contrast(1.02) saturate(0.9);
-    }
-
-    .custom-region-label{
-      background:transparent;
-      border:none;
-      box-shadow:none;
-      color:#8c9aad;
-      font-weight:800;
-      font-size:14px;
-      letter-spacing:0.08em;
-      text-transform:uppercase;
-      pointer-events:none;
-    }
-
-    .custom-region-label div{
-      background:transparent;
-    }
-
-    .pulse-marker{
-      animation:markerPulse 1.6s ease-out infinite;
-      transform-origin:center;
-    }
-
-    @keyframes markerPulse{
-      0%{transform:scale(0.92);opacity:0.85;}
-      50%{transform:scale(1.08);opacity:1;}
-      100%{transform:scale(0.92);opacity:0.85;}
-    }
-
-    @media (max-width:1180px){
-      .topbar{
-        flex-direction:column;
-      }
-
-      .status-area{
-        min-width:auto;
-        width:100%;
-      }
-
-      .toolbar{
-        align-self:stretch;
-        justify-content:flex-start;
-      }
-    }
-
-    @media (max-width:900px){
-      .sidebar{
-        width:320px;
-      }
-    }
-
-    @media (max-width:840px){
-      .status-wrap{
-        grid-template-columns:1fr;
-      }
-
-      .sidebar{
-        left:16px;
-        right:16px;
-        top:auto;
-        bottom:96px;
-        width:auto;
-        max-height:44vh;
-      }
-
-      .legend{
-        width:auto;
-        max-width:250px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cyber Threat Map | Live Security Dashboard</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+:root{
+  --bg:#031018;
+  --bg-2:#071b25;
+  --panel:rgba(5,18,28,0.84);
+  --panel-2:rgba(7,24,37,0.92);
+  --panel-border:rgba(59,191,220,0.18);
+  --text:#e9f7ff;
+  --muted:#89b7c8;
+  --cyan:#20d7ff;
+  --cyan-soft:rgba(32,215,255,0.18);
+  --blue:#6f83ff;
+  --blue-soft:rgba(111,131,255,0.16);
+  --red:#ff5d73;
+  --red-soft:rgba(255,93,115,0.18);
+  --yellow:#ffd560;
+  --yellow-soft:rgba(255,213,96,0.18);
+  --purple:#b05cff;
+  --purple-soft:rgba(176,92,255,0.18);
+  --green:#35e0a1;
+  --green-soft:rgba(53,224,161,0.18);
+  --shadow:0 18px 40px rgba(0,0,0,0.35);
+  --radius-xl:22px;
+  --radius-lg:18px;
+  --radius-md:14px;
+  --radius-sm:12px;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html, body{
+  width:100%;
+  height:100%;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at top left, rgba(32,215,255,0.10), transparent 24%),
+    radial-gradient(circle at top right, rgba(176,92,255,0.07), transparent 20%),
+    radial-gradient(circle at bottom center, rgba(255,93,115,0.06), transparent 20%),
+    linear-gradient(180deg, #04111a 0%, #031018 100%);
+  color:var(--text);
+  font-family:Inter, Arial, sans-serif;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(32,215,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(32,215,255,0.05) 1px, transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+  z-index:0;
+  opacity:0.35;
+}
+
+#map{
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100vh;
+  z-index:1;
+  background:transparent;
+}
+
+.glass{
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:var(--shadow);
+}
+
+.top-left{
+  position:fixed;
+  top:18px;
+  left:18px;
+  z-index:1000;
+  width:min(560px, calc(100vw - 40px));
+  padding:18px 20px;
+  border-radius:var(--radius-xl);
+}
+
+.eyebrow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  font-weight:800;
+  color:var(--cyan);
+  margin-bottom:10px;
+}
+
+.live-dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 0 0 rgba(53,224,161,0.45);
+  animation:pulseDot 1.8s infinite;
+}
+
+@keyframes pulseDot{
+  0%{box-shadow:0 0 0 0 rgba(53,224,161,0.45);}
+  70%{box-shadow:0 0 0 10px rgba(53,224,161,0);}
+  100%{box-shadow:0 0 0 0 rgba(53,224,161,0);}
+}
+
+.hero-title{
+  margin:0;
+  font-size:clamp(42px, 5vw, 72px);
+  line-height:0.96;
+  font-weight:900;
+  letter-spacing:-0.04em;
+}
+
+.hero-sub{
+  margin:14px 0 0;
+  max-width:480px;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.6;
+}
+
+.hero-note{
+  margin-top:10px;
+  color:#b9e8f3;
+  font-size:13px;
+  font-weight:600;
+}
+
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px;
+}
+
+.tag{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(32,215,255,0.18);
+  background:rgba(32,215,255,0.08);
+  color:#dff8ff;
+  font-size:12px;
+  font-weight:700;
+  text-decoration:none;
+}
+
+.top-actions{
+  position:fixed;
+  top:18px;
+  right:18px;
+  z-index:1000;
+  display:flex;
+  gap:10px;
+  padding:10px;
+  border-radius:18px;
+}
+
+.top-actions button{
+  border:none;
+  border-radius:12px;
+  padding:11px 14px;
+  background:rgba(255,255,255,0.06);
+  color:var(--text);
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  transition:0.2s ease;
+}
+
+.top-actions button:hover{
+  transform:translateY(-1px);
+  background:rgba(32,215,255,0.12);
+}
+
+.top-actions button.active{
+  background:rgba(32,215,255,0.16);
+  color:#ffffff;
+  box-shadow:inset 0 0 0 1px rgba(32,215,255,0.35);
+}
+
+.kpis{
+  position:fixed;
+  top:116px;
+  left:18px;
+  z-index:1000;
+  display:grid;
+  grid-template-columns:repeat(4, minmax(140px, 1fr));
+  gap:12px;
+  width:min(920px, calc(100vw - 420px));
+}
+
+.kpi{
+  border-radius:18px;
+  padding:14px;
+  min-height:108px;
+}
+
+.kpi-label{
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  font-size:11px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.kpi-value{
+  font-size:30px;
+  font-weight:900;
+  line-height:1;
+  margin-bottom:8px;
+  text-shadow:0 0 12px rgba(32,215,255,0.16);
+}
+
+.kpi-sub{
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.4;
+}
+
+.right-panel{
+  position:fixed;
+  top:18px;
+  right:18px;
+  width:340px;
+  height:calc(100vh - 36px);
+  z-index:1000;
+  border-radius:24px;
+  padding:18px;
+  overflow:auto;
+}
+
+.right-panel::-webkit-scrollbar{
+  width:8px;
+}
+
+.right-panel::-webkit-scrollbar-thumb{
+  background:rgba(32,215,255,0.18);
+  border-radius:999px;
+}
+
+.panel-title{
+  margin:0;
+  font-size:18px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:#dff8ff;
+  font-weight:900;
+}
+
+.panel-subtitle{
+  margin:10px 0 0;
+  color:var(--cyan);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+}
+
+.select-wrap{
+  margin-top:12px;
+}
+
+.select-wrap select{
+  width:100%;
+  background:rgba(0,0,0,0.22);
+  color:var(--text);
+  border:1px solid rgba(32,215,255,0.22);
+  border-radius:12px;
+  padding:12px 14px;
+  font-size:14px;
+  outline:none;
+}
+
+.divider{
+  height:1px;
+  background:rgba(32,215,255,0.14);
+  margin:18px 0;
+}
+
+.section-title{
+  margin:0 0 12px;
+  font-size:15px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  font-weight:900;
+  color:#f2fdff;
+}
+
+.metric-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.metric{
+  padding:13px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(32,215,255,0.10);
+}
+
+.metric span{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.metric strong{
+  font-size:18px;
+  color:#ffffff;
+}
+
+.data-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.data-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:12px;
+  align-items:center;
+}
+
+.data-label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:14px;
+  font-weight:700;
+  color:#edfaff;
+}
+
+.flag-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 8px rgba(32,215,255,0.45);
+  flex-shrink:0;
+}
+
+.data-value{
+  font-size:14px;
+  font-weight:800;
+  color:#ffffff;
+}
+
+.bar{
+  grid-column:1 / -1;
+  width:100%;
+  height:8px;
+  background:rgba(255,255,255,0.05);
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid rgba(32,215,255,0.08);
+}
+
+.bar > div{
+  height:100%;
+  border-radius:999px;
+}
+
+.feed-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.feed-item{
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(32,215,255,0.10);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.feed-time{
+  color:var(--cyan);
+  font-weight:800;
+  margin-right:6px;
+}
+
+.feed-meta{
+  display:block;
+  color:var(--muted);
+  margin-top:4px;
+  font-size:11px;
+}
+
+.left-filter{
+  position:fixed;
+  top:300px;
+  left:18px;
+  width:240px;
+  z-index:1000;
+  border-radius:20px;
+  padding:16px;
+}
+
+.left-filter h3{
+  margin:0 0 12px;
+  color:var(--cyan);
+  font-size:16px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  font-weight:900;
+}
+
+.filter-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.filter-btn{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 12px;
+  border-radius:14px;
+  border:1px solid rgba(32,215,255,0.12);
+  background:rgba(255,255,255,0.03);
+  color:#edfaff;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:0.2s ease;
+  text-align:left;
+}
+
+.filter-btn:hover{
+  background:rgba(32,215,255,0.10);
+}
+
+.filter-btn.active{
+  background:rgba(32,215,255,0.14);
+  box-shadow:inset 0 0 0 1px rgba(32,215,255,0.25);
+}
+
+.type-dot{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+
+.legend-box{
+  position:fixed;
+  bottom:170px;
+  left:18px;
+  width:240px;
+  z-index:1000;
+  border-radius:20px;
+  padding:16px;
+}
+
+.legend-box h3{
+  margin:0 0 12px;
+  font-size:15px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  font-weight:900;
+  color:#f2fdff;
+}
+
+.legend-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--muted);
+  font-size:13px;
+  margin:8px 0;
+}
+
+.legend-dot{
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+
+.legend-line{
+  width:26px;
+  height:2px;
+  background:var(--cyan);
+  box-shadow:0 0 10px rgba(32,215,255,0.4);
+  flex-shrink:0;
+}
+
+.bottom-timeline{
+  position:fixed;
+  left:18px;
+  right:370px;
+  bottom:18px;
+  z-index:1000;
+  border-radius:22px;
+  padding:16px;
+}
+
+.timeline-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  margin-bottom:14px;
+}
+
+.timeline-title{
+  font-size:14px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  font-weight:900;
+  color:#f2fdff;
+}
+
+.timeline-now{
+  font-size:14px;
+  font-weight:900;
+  color:var(--cyan);
+}
+
+.timeline-stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+
+.spark-wrap{
+  display:grid;
+  gap:10px;
+}
+
+.spark{
+  position:relative;
+  height:28px;
+  border-radius:10px;
+  overflow:hidden;
+  background:
+    linear-gradient(90deg, rgba(32,215,255,0.04), rgba(32,215,255,0.02)),
+    rgba(255,255,255,0.02);
+  border:1px solid rgba(32,215,255,0.08);
+}
+
+.spark-bar{
+  position:absolute;
+  bottom:0;
+  width:4px;
+  border-radius:999px 999px 0 0;
+  opacity:0.95;
+}
+
+.leaflet-control-container{
+  z-index:2000 !important;
+}
+
+.leaflet-control-zoom{
+  border:none !important;
+  box-shadow:var(--shadow) !important;
+  border-radius:16px !important;
+  overflow:hidden;
+}
+
+.leaflet-control-zoom a{
+  background:rgba(6,21,32,0.95) !important;
+  color:var(--text) !important;
+  border-bottom:1px solid rgba(32,215,255,0.14) !important;
+  width:44px !important;
+  height:44px !important;
+  line-height:44px !important;
+  font-size:19px !important;
+  font-weight:900 !important;
+}
+
+.leaflet-bottom.leaflet-left .leaflet-control-zoom{
+  margin-left:18px !important;
+  margin-bottom:18px !important;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip{
+  background:#071a25;
+  color:#ecfbff;
+  border:1px solid rgba(32,215,255,0.18);
+  box-shadow:var(--shadow);
+}
+
+.leaflet-tile-pane{
+  filter:hue-rotate(165deg) saturate(0.35) brightness(0.45) contrast(1.15);
+}
+
+.custom-region-label{
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  color:rgba(32,215,255,0.40);
+  font-size:16px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:0.10em;
+  pointer-events:none;
+  text-shadow:0 0 16px rgba(32,215,255,0.14);
+}
+
+.pulse-node{
+  animation:nodePulse 1.5s ease-out infinite;
+}
+
+@keyframes nodePulse{
+  0%{transform:scale(0.96); opacity:0.82;}
+  50%{transform:scale(1.08); opacity:1;}
+  100%{transform:scale(0.96); opacity:0.82;}
+}
+
+@media (max-width:1400px){
+  .kpis{
+    grid-template-columns:repeat(2, minmax(140px, 1fr));
+    width:min(620px, calc(100vw - 420px));
+  }
+}
+
+@media (max-width:1180px){
+  .right-panel{
+    width:320px;
+  }
+
+  .bottom-timeline{
+    right:350px;
+  }
+
+  .kpis{
+    width:min(520px, calc(100vw - 380px));
+  }
+}
+
+@media (max-width:980px){
+  .right-panel{
+    display:none;
+  }
+
+  .bottom-timeline{
+    right:18px;
+  }
+
+  .kpis{
+    width:min(720px, calc(100vw - 36px));
+  }
+}
+
+@media (max-width:820px){
+  .kpis{
+    grid-template-columns:repeat(2, minmax(140px, 1fr));
+    top:200px;
+  }
+
+  .left-filter,
+  .legend-box{
+    display:none;
+  }
+
+  .bottom-timeline{
+    left:12px;
+    right:12px;
+  }
+
+  .top-left{
+    left:12px;
+    right:12px;
+    width:auto;
+  }
+
+  .top-actions{
+    top:auto;
+    bottom:12px;
+    right:12px;
+    left:12px;
+    justify-content:center;
+  }
+}
+
+@media (max-width:640px){
+  .hero-title{
+    font-size:40px;
+  }
+
+  .kpis{
+    grid-template-columns:1fr;
+    width:calc(100vw - 24px);
+    left:12px;
+    top:232px;
+  }
+
+  .bottom-timeline{
+    display:none;
+  }
+}
+</style>
 </head>
 <body>
 
-  <div id="map"></div>
+<div id="map"></div>
 
-  <div class="topbar">
-    <section class="hero glass">
-      <div class="eyebrow">
-        <span class="live-dot"></span>
-        Portfolio Project • Interactive Cyber Visualization
-      </div>
+<section class="top-left glass">
+  <div class="eyebrow">
+    <span class="live-dot"></span>
+    Live Security Visualization • Front-End Project
+  </div>
 
-      <h1>Cyber Threat Map</h1>
+  <h1 class="hero-title">Cyber Threat Map</h1>
 
-      <p>
-        Interactive cyber-threat visualization built to showcase front-end,
-        data visualization and map-based UI design.
-      </p>
+  <p class="hero-sub">
+    Une visualisation cyber en temps réel inspirée des security operations centers,
+    conçue pour démontrer l’UI, la cartographie interactive, les animations et la mise en scène de données simulées.
+  </p>
 
-      <div class="hero-note">
-        Created by Firdaws Bouharis • EPITA Student
-      </div>
+  <div class="hero-note">
+    Created by Firdaws Bouharis • EPITA Student
+  </div>
 
-      <div class="tags">
-        <div class="tag">HTML / CSS / JavaScript</div>
-        <div class="tag">Leaflet.js</div>
-        <div class="tag">Interactive Map UI</div>
-        <div class="tag">Portfolio-ready</div>
-      </div>
+  <div class="tags">
+    <span class="tag">HTML / CSS / JavaScript</span>
+    <span class="tag">Leaflet.js</span>
+    <span class="tag">SOC-style dashboard</span>
+    <span class="tag">Live simulated traffic</span>
+  </div>
+</section>
 
-      <div class="hero-bottom-note">
-        UI sobre • données simulées • expérience fluide
-      </div>
-    </section>
+<div class="top-actions glass">
+  <button class="active" id="globalBtn">Vue globale</button>
+  <button id="pauseBtn">Pause events</button>
+  <button id="contrastBtn">Mode contrast</button>
+</div>
 
-    <div class="status-area">
-      <div class="toolbar glass-soft">
-        <button class="active" id="focusAllBtn">Vue globale</button>
-        <button id="pauseBtn">Pause events</button>
-        <button id="themeBtn">Mode contrast</button>
-      </div>
+<section class="kpis">
+  <div class="kpi glass">
+    <div class="kpi-label">Live events</div>
+    <div class="kpi-value" id="liveEvents">0</div>
+    <div class="kpi-sub">simulated incidents displayed</div>
+  </div>
 
-      <div class="status-wrap">
-        <div class="status-box glass">
-          <div class="status-label">Live events</div>
-          <div class="status-value" id="liveEvents">0</div>
-          <div class="status-sub">simulated incidents displayed</div>
-        </div>
+  <div class="kpi glass">
+    <div class="kpi-label">Countries tracked</div>
+    <div class="kpi-value" id="countryCount">10</div>
+    <div class="kpi-sub">global monitoring nodes</div>
+  </div>
 
-        <div class="status-box glass">
-          <div class="status-label">Countries tracked</div>
-          <div class="status-value" id="countryCount">10</div>
-          <div class="status-sub">global monitoring nodes</div>
-        </div>
+  <div class="kpi glass">
+    <div class="kpi-label">Threat level</div>
+    <div class="kpi-value" id="threatLevel">Elevated</div>
+    <div class="kpi-sub">activity-based intensity</div>
+  </div>
 
-        <div class="status-box glass">
-          <div class="status-label">Threat level</div>
-          <div class="status-value" id="threatLevel">Moderate</div>
-          <div class="status-sub">dynamic portfolio showcase</div>
-        </div>
-      </div>
+  <div class="kpi glass">
+    <div class="kpi-label">Attack mode</div>
+    <div class="kpi-value" id="attackMode">All</div>
+    <div class="kpi-sub">active traffic filter</div>
+  </div>
+</section>
+
+<aside class="left-filter glass">
+  <h3>Attack types</h3>
+  <div class="filter-list">
+    <button class="filter-btn active" data-filter="All">
+      <span class="type-dot" style="background:var(--cyan)"></span>
+      All traffic
+    </button>
+    <button class="filter-btn" data-filter="DDoS">
+      <span class="type-dot" style="background:var(--yellow)"></span>
+      DDoS attackers
+    </button>
+    <button class="filter-btn" data-filter="Malware">
+      <span class="type-dot" style="background:var(--red)"></span>
+      Malware
+    </button>
+    <button class="filter-btn" data-filter="Phishing">
+      <span class="type-dot" style="background:var(--cyan)"></span>
+      Phishing
+    </button>
+    <button class="filter-btn" data-filter="Ransomware">
+      <span class="type-dot" style="background:var(--purple)"></span>
+      Ransomware
+    </button>
+    <button class="filter-btn" data-filter="Brute Force">
+      <span class="type-dot" style="background:var(--blue)"></span>
+      Brute Force
+    </button>
+  </div>
+</aside>
+
+<section class="legend-box glass">
+  <h3>Legend</h3>
+  <div class="legend-row">
+    <span class="legend-dot" style="background:var(--red)"></span>
+    Attack source
+  </div>
+  <div class="legend-row">
+    <span class="legend-dot" style="background:var(--cyan)"></span>
+    Target endpoint
+  </div>
+  <div class="legend-row">
+    <span class="legend-line"></span>
+    Live connection flow
+  </div>
+  <div class="legend-row">
+    <span class="legend-dot" style="background:var(--green)"></span>
+    Monitored capital
+  </div>
+</section>
+
+<aside class="right-panel glass">
+  <h2 class="panel-title">Live Cyber Threat Map</h2>
+  <div class="panel-subtitle">Statistics interval</div>
+
+  <div class="select-wrap">
+    <select id="intervalSelect">
+      <option>1 hour</option>
+      <option>30 minutes</option>
+      <option>10 minutes</option>
+      <option>Live</option>
+    </select>
+  </div>
+
+  <div class="divider"></div>
+
+  <h3 class="section-title" id="focusTitle">Global overview</h3>
+  <div class="metric-grid">
+    <div class="metric">
+      <span>Top city</span>
+      <strong id="topCity">Monitoring</strong>
+    </div>
+    <div class="metric">
+      <span>Incidents</span>
+      <strong id="incidentCount">38</strong>
+    </div>
+    <div class="metric">
+      <span>Main threat</span>
+      <strong id="mainThreat">Phishing</strong>
+    </div>
+    <div class="metric">
+      <span>Risk score</span>
+      <strong id="riskScore">74/100</strong>
     </div>
   </div>
 
-  <aside class="sidebar glass">
-    <div class="sidebar-header">
-      <div>
-        <h2 id="countryName">Global Overview</h2>
-        <div class="small" id="countrySubtitle">
-          Global monitoring view with simulated cyber activity indicators.
-        </div>
-      </div>
-      <div class="focus-chip" id="focusChip">Overview</div>
-    </div>
+  <div class="divider"></div>
 
-    <div class="metric-grid">
-      <div class="metric">
-        <span>Top city</span>
-        <strong id="topCity">Monitoring</strong>
-      </div>
-      <div class="metric">
-        <span>Incidents</span>
-        <strong id="incidentCount">24</strong>
-      </div>
-      <div class="metric">
-        <span>Main threat</span>
-        <strong id="mainThreat">Phishing</strong>
-      </div>
-      <div class="metric">
-        <span>Risk score</span>
-        <strong id="riskScore">68/100</strong>
-      </div>
-    </div>
+  <h3 class="section-title">Top attackers</h3>
+  <div class="data-list" id="attackersList"></div>
 
-    <div class="risk-bar-wrap">
-      <div class="risk-bar-head">
-        <span>Risk intensity</span>
-        <strong id="riskBarValue">Moderate</strong>
-      </div>
-      <div class="risk-bar">
-        <div class="risk-bar-fill" id="riskBarFill" style="width:68%;"></div>
+  <div class="divider"></div>
+
+  <h3 class="section-title">Top attacked</h3>
+  <div class="data-list" id="targetsList"></div>
+
+  <div class="divider"></div>
+
+  <h3 class="section-title">Top attack vectors</h3>
+  <div class="data-list" id="vectorsList"></div>
+
+  <div class="divider"></div>
+
+  <h3 class="section-title">Recent activity</h3>
+  <div class="feed-list" id="recentFeed"></div>
+</aside>
+
+<section class="bottom-timeline glass">
+  <div class="timeline-head">
+    <div>
+      <div class="timeline-title">Live activity timeline</div>
+      <div class="timeline-stats">
+        <span id="timelineEvents">0 events last minute</span>
+        <span id="timelineDominant">dominant threat: —</span>
+        <span id="timelineFocus">mode: all traffic</span>
       </div>
     </div>
-
-    <div class="mini-kpi-row">
-      <div class="mini-kpi">
-        <small>Coverage</small>
-        <strong id="coverageValue">Global</strong>
-      </div>
-      <div class="mini-kpi">
-        <small>Status</small>
-        <strong id="statusValue">Monitoring</strong>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <h3 class="list-title">Threat distribution</h3>
-    <ul class="threat-list" id="threatList">
-      <li><span>DDoS</span><span class="badge blue">22%</span></li>
-      <li><span>Malware</span><span class="badge red">26%</span></li>
-      <li><span>Phishing</span><span class="badge gold">31%</span></li>
-      <li><span>Ransomware</span><span class="badge red">21%</span></li>
-    </ul>
-
-    <div class="divider"></div>
-
-    <h3 class="list-title">Top threats</h3>
-    <ul class="top-list" id="topThreats">
-      <li><span>Most targeted</span><span class="badge blue">United States</span></li>
-      <li><span>Most active source</span><span class="badge red">Russia</span></li>
-      <li><span>Dominant threat</span><span class="badge gold">Phishing</span></li>
-      <li><span>Events last 60s</span><span class="badge green">0</span></li>
-    </ul>
-
-    <div class="divider"></div>
-
-    <h3 class="list-title">Recent activity</h3>
-    <ul class="feed-list" id="recentFeed">
-      <li>Monitoring network activity...</li>
-    </ul>
-  </aside>
-
-  <div class="legend glass-soft">
-    <h3>Legend</h3>
-    <div class="legend-row">
-      <span class="legend-dot" style="background:#c76666;"></span>
-      Attack source
-    </div>
-    <div class="legend-row">
-      <span class="legend-dot" style="background:#456b93;"></span>
-      Target endpoint
-    </div>
-    <div class="legend-row">
-      <span class="legend-line"></span>
-      Live connection flow
-    </div>
-    <div class="legend-row">
-      <span class="legend-dot" style="background:#8fa1b6;"></span>
-      Capital marker
-    </div>
+    <div class="timeline-now">NOW</div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <div class="spark-wrap">
+    <div class="spark" id="spark1"></div>
+    <div class="spark" id="spark2"></div>
+    <div class="spark" id="spark3"></div>
+  </div>
+</section>
 
-  <script>
-    const WORLD_VIEW = {
-      center:[20, 0],
-      zoom:2
-    };
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    const map = L.map("map", {
-      zoomControl:false,
-      minZoom:2,
-      maxZoom:8,
-      zoomSnap:0.25,
-      worldCopyJump:true,
-      maxBounds:[[-85, -540], [85, 540]],
-      maxBoundsViscosity:0.16,
-      inertia:true,
-      inertiaDeceleration:2800
-    }).setView(WORLD_VIEW.center, WORLD_VIEW.zoom);
+<script>
+const WORLD_VIEW = { center:[18, 8], zoom:2.2 };
 
-    L.control.zoom({ position:"bottomleft" }).addTo(map);
+const map = L.map("map", {
+  zoomControl:false,
+  minZoom:2,
+  maxZoom:6.5,
+  zoomSnap:0.25,
+  worldCopyJump:true,
+  maxBounds:[[-85, -540], [85, 540]],
+  maxBoundsViscosity:0.10,
+  inertia:true,
+  inertiaDeceleration:2600
+}).setView(WORLD_VIEW.center, WORLD_VIEW.zoom);
 
-    L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      {
-        attribution:"&copy; OpenStreetMap &copy; CARTO",
-        noWrap:false
-      }
-    ).addTo(map);
+L.control.zoom({ position:"bottomleft" }).addTo(map);
 
-    const capitals = [
-      ["France","Paris",48.85,2.35],
-      ["Germany","Berlin",52.52,13.40],
-      ["United States","Washington",38.90,-77.03],
-      ["Russia","Moscow",55.75,37.61],
-      ["China","Beijing",39.90,116.40],
-      ["Japan","Tokyo",35.67,139.65],
-      ["India","New Delhi",28.61,77.20],
-      ["Saudi Arabia","Riyadh",24.71,46.67],
-      ["United Kingdom","London",51.50,-0.12],
-      ["Brazil","Brasilia",-15.79,-47.88]
-    ];
+L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  {
+    attribution:"&copy; OpenStreetMap &copy; CARTO",
+    noWrap:false
+  }
+).addTo(map);
 
-    const attackTypes = ["DDoS", "Malware", "Phishing", "Ransomware", "Brute Force"];
+const capitals = [
+  ["France","Paris",48.85,2.35],
+  ["Germany","Berlin",52.52,13.40],
+  ["United States","Washington",38.90,-77.03],
+  ["Russia","Moscow",55.75,37.61],
+  ["China","Beijing",39.90,116.40],
+  ["Japan","Tokyo",35.67,139.65],
+  ["India","New Delhi",28.61,77.20],
+  ["Saudi Arabia","Riyadh",24.71,46.67],
+  ["United Kingdom","London",51.50,-0.12],
+  ["Brazil","Brasilia",-15.79,-47.88]
+];
 
-    const cityMap = {
-      "France":["Paris","Lyon","Marseille"],
-      "Germany":["Berlin","Hamburg","Munich"],
-      "United States":["Washington","New York","Austin"],
-      "Russia":["Moscow","Saint Petersburg","Kazan"],
-      "China":["Beijing","Shanghai","Shenzhen"],
-      "Japan":["Tokyo","Osaka","Yokohama"],
-      "India":["New Delhi","Bangalore","Mumbai"],
-      "Saudi Arabia":["Riyadh","Jeddah","Dammam"],
-      "United Kingdom":["London","Manchester","Birmingham"],
-      "Brazil":["Brasilia","São Paulo","Rio de Janeiro"]
-    };
+const cityMap = {
+  "France":["Paris","Lyon","Marseille"],
+  "Germany":["Berlin","Hamburg","Munich"],
+  "United States":["Washington","New York","Austin"],
+  "Russia":["Moscow","Saint Petersburg","Kazan"],
+  "China":["Beijing","Shanghai","Shenzhen"],
+  "Japan":["Tokyo","Osaka","Yokohama"],
+  "India":["New Delhi","Bangalore","Mumbai"],
+  "Saudi Arabia":["Riyadh","Jeddah","Dammam"],
+  "United Kingdom":["London","Manchester","Birmingham"],
+  "Brazil":["Brasilia","São Paulo","Rio de Janeiro"]
+};
 
-    const countryProfiles = {
-      "France": { riskBase:68, threat:"Phishing", subtitle:"European infrastructure and enterprise activity overview." },
-      "Germany": { riskBase:64, threat:"Malware", subtitle:"Industrial and enterprise exposure across central Europe." },
-      "United States": { riskBase:78, threat:"DDoS", subtitle:"Large-scale digital infrastructure and high attack surface." },
-      "Russia": { riskBase:72, threat:"Ransomware", subtitle:"Persistent activity profile with elevated simulated threat pressure." },
-      "China": { riskBase:75, threat:"Malware", subtitle:"High-density network activity and broad operational coverage." },
-      "Japan": { riskBase:66, threat:"Phishing", subtitle:"Stable profile with concentrated urban exposure patterns." },
-      "India": { riskBase:74, threat:"Brute Force", subtitle:"Rapid digital growth with broad endpoint variation." },
-      "Saudi Arabia": { riskBase:70, threat:"Ransomware", subtitle:"Regional monitoring focus with strategic infrastructure exposure." },
-      "United Kingdom": { riskBase:67, threat:"Phishing", subtitle:"Financial and service-sector targeting indicators." },
-      "Brazil": { riskBase:63, threat:"Malware", subtitle:"Regional endpoint distribution with moderate risk evolution." }
-    };
+const countryProfiles = {
+  "France": { riskBase:70, threat:"Phishing", subtitle:"European enterprise exposure and credential-driven activity." },
+  "Germany": { riskBase:67, threat:"Malware", subtitle:"Industrial and infrastructure-heavy simulated pressure." },
+  "United States": { riskBase:83, threat:"DDoS", subtitle:"High-volume digital attack surface and dense traffic." },
+  "Russia": { riskBase:76, threat:"Ransomware", subtitle:"Persistent offensive activity and elevated source intensity." },
+  "China": { riskBase:78, threat:"Malware", subtitle:"Broad operational coverage with frequent endpoint traffic." },
+  "Japan": { riskBase:68, threat:"Phishing", subtitle:"Urban concentration with targeted credential campaigns." },
+  "India": { riskBase:75, threat:"Brute Force", subtitle:"Large endpoint diversity with continuous simulated scans." },
+  "Saudi Arabia": { riskBase:73, threat:"Ransomware", subtitle:"Regional strategic infrastructure and concentrated activity." },
+  "United Kingdom": { riskBase:71, threat:"Phishing", subtitle:"Financial and services exposure with frequent targeting." },
+  "Brazil": { riskBase:65, threat:"Malware", subtitle:"Moderate regional activity with growing risk profile." }
+};
 
-    let liveEvents = 0;
-    let selectedCountryLayer = null;
-    let selectedCountryName = null;
-    let geoLayer = null;
-    let activityLog = [];
-    let eventTimer = null;
-    let isPaused = false;
-    let contrastMode = false;
+const attackTypes = ["DDoS", "Malware", "Phishing", "Ransomware", "Brute Force"];
+const attackColors = {
+  "DDoS": { main:"#ffd560", soft:"rgba(255,213,96,0.22)" },
+  "Malware": { main:"#ff5d73", soft:"rgba(255,93,115,0.22)" },
+  "Phishing": { main:"#20d7ff", soft:"rgba(32,215,255,0.22)" },
+  "Ransomware": { main:"#b05cff", soft:"rgba(176,92,255,0.22)" },
+  "Brute Force": { main:"#6f83ff", soft:"rgba(111,131,255,0.22)" }
+};
 
-    function random(arr){
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
+let liveEvents = 0;
+let selectedCountryLayer = null;
+let selectedCountryName = null;
+let geoLayer = null;
+let activityLog = [];
+let eventTimer = null;
+let statsTimer = null;
+let isPaused = false;
+let contrastMode = false;
+let activeFilter = "All";
+let sparkData1 = new Array(120).fill(0);
+let sparkData2 = new Array(120).fill(0);
+let sparkData3 = new Array(120).fill(0);
 
-    function randomInt(min, max){
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+function random(arr){
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-    function formatTime(date){
-      return date.toLocaleTimeString("fr-FR", {
-        hour:"2-digit",
-        minute:"2-digit",
-        second:"2-digit"
-      });
-    }
+function randomInt(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
-    function defaultStyle(){
-      return {
-        color:"#99a9bb",
-        weight:1,
-        fillColor:"#dde5ee",
-        fillOpacity:0.22
-      };
-    }
+function formatTime(date){
+  return date.toLocaleTimeString("fr-FR", {
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit"
+  });
+}
 
-    function hoverStyle(){
-      return {
-        color:"#72859b",
-        weight:1.6,
-        fillColor:"#d3dde8",
-        fillOpacity:0.34
-      };
-    }
+function getRiskLevel(score){
+  if(score >= 82) return "High";
+  if(score >= 68) return "Elevated";
+  return "Moderate";
+}
 
-    function selectedStyle(){
-      return {
-        color:"#51667d",
-        weight:2.2,
-        fillColor:"#aeb9c7",
-        fillOpacity:0.52
-      };
-    }
+function defaultStyle(){
+  return {
+    color:"rgba(32,215,255,0.28)",
+    weight:1.1,
+    fillColor:"rgba(32,215,255,0.05)",
+    fillOpacity:0.10
+  };
+}
 
-    function getRiskLevel(score){
-      if(score >= 82) return "High";
-      if(score >= 68) return "Elevated";
-      return "Moderate";
-    }
+function hoverStyle(){
+  return {
+    color:"rgba(32,215,255,0.52)",
+    weight:1.4,
+    fillColor:"rgba(32,215,255,0.11)",
+    fillOpacity:0.18
+  };
+}
 
-    function buildDistribution(mainThreat){
-      const base = {
-        "DDoS": randomInt(18, 35),
-        "Malware": randomInt(15, 32),
-        "Phishing": randomInt(15, 34),
-        "Ransomware": randomInt(12, 28)
-      };
+function selectedStyle(){
+  return {
+    color:"rgba(255,93,115,0.75)",
+    weight:1.8,
+    fillColor:"rgba(255,93,115,0.18)",
+    fillOpacity:0.24
+  };
+}
 
-      if(base[mainThreat] !== undefined){
-        base[mainThreat] += randomInt(8, 18);
-      }
+function updateFocusPanel(countryName = null){
+  if(!countryName){
+    document.getElementById("focusTitle").textContent = "Global overview";
+    document.getElementById("topCity").textContent = "Monitoring";
+    document.getElementById("incidentCount").textContent = "38";
+    document.getElementById("mainThreat").textContent = "Phishing";
+    document.getElementById("riskScore").textContent = "74/100";
+    return;
+  }
 
-      const total = Object.values(base).reduce((a, b) => a + b, 0);
+  const profile = countryProfiles[countryName] || {
+    riskBase:68,
+    threat:random(attackTypes)
+  };
 
-      return [
-        { name:"DDoS", value:Math.round((base["DDoS"] / total) * 100), cls:"blue" },
-        { name:"Malware", value:Math.round((base["Malware"] / total) * 100), cls:"red" },
-        { name:"Phishing", value:Math.round((base["Phishing"] / total) * 100), cls:"gold" },
-        { name:"Ransomware", value:Math.round((base["Ransomware"] / total) * 100), cls:"red" }
-      ];
-    }
+  const cities = cityMap[countryName] || ["Monitoring"];
+  const incidents = randomInt(profile.riskBase - 16, profile.riskBase + 46);
+  const score = Math.min(98, Math.max(55, profile.riskBase + randomInt(-5, 10)));
 
-    function updateSidebar(countryName = null){
-      if(!countryName){
-        document.getElementById("countryName").textContent = "Global Overview";
-        document.getElementById("countrySubtitle").textContent =
-          "Global monitoring view with simulated cyber activity indicators.";
-        document.getElementById("focusChip").textContent = "Overview";
-        document.getElementById("topCity").textContent = "Monitoring";
-        document.getElementById("incidentCount").textContent = "24";
-        document.getElementById("mainThreat").textContent = "Phishing";
-        document.getElementById("riskScore").textContent = "68/100";
-        document.getElementById("riskBarValue").textContent = "Moderate";
-        document.getElementById("riskBarFill").style.width = "68%";
-        document.getElementById("coverageValue").textContent = "Global";
-        document.getElementById("statusValue").textContent = "Monitoring";
+  document.getElementById("focusTitle").textContent = countryName;
+  document.getElementById("topCity").textContent = random(cities);
+  document.getElementById("incidentCount").textContent = incidents;
+  document.getElementById("mainThreat").textContent = profile.threat;
+  document.getElementById("riskScore").textContent = score + "/100";
+}
 
-        document.getElementById("threatList").innerHTML = `
-          <li><span>DDoS</span><span class="badge blue">22%</span></li>
-          <li><span>Malware</span><span class="badge red">26%</span></li>
-          <li><span>Phishing</span><span class="badge gold">31%</span></li>
-          <li><span>Ransomware</span><span class="badge red">21%</span></li>
-        `;
-        return;
-      }
+function countBy(field, filterFn = null){
+  const out = {};
+  activityLog.forEach(item => {
+    if(filterFn && !filterFn(item)) return;
+    out[item[field]] = (out[item[field]] || 0) + 1;
+  });
+  return out;
+}
 
-      const profile = countryProfiles[countryName] || {
-        riskBase:66,
-        threat:random(attackTypes),
-        subtitle:"Interactive country focus with simulated cyber activity indicators."
-      };
+function topEntries(obj, limit = 5){
+  return Object.entries(obj).sort((a,b) => b[1] - a[1]).slice(0, limit);
+}
 
-      const cities = cityMap[countryName] || ["Monitoring"];
-      const mainThreat = profile.threat;
-      const incidents = randomInt(profile.riskBase - 18, profile.riskBase + 50);
-      const score = Math.min(97, Math.max(52, profile.riskBase + randomInt(-6, 11)));
-      const distribution = buildDistribution(mainThreat);
+function renderBarList(containerId, entries, color){
+  const container = document.getElementById(containerId);
 
-      document.getElementById("countryName").textContent = countryName;
-      document.getElementById("countrySubtitle").textContent = profile.subtitle;
-      document.getElementById("focusChip").textContent = "Country focus";
-      document.getElementById("topCity").textContent = random(cities);
-      document.getElementById("incidentCount").textContent = incidents;
-      document.getElementById("mainThreat").textContent = mainThreat;
-      document.getElementById("riskScore").textContent = score + "/100";
-      document.getElementById("riskBarValue").textContent = getRiskLevel(score);
-      document.getElementById("riskBarFill").style.width = score + "%";
-      document.getElementById("coverageValue").textContent = countryName;
-      document.getElementById("statusValue").textContent = getRiskLevel(score);
+  if(entries.length === 0){
+    container.innerHTML = `<div class="feed-item">No data yet.</div>`;
+    return;
+  }
 
-      document.getElementById("threatList").innerHTML = distribution.map(item => `
-        <li>
-          <span>${item.name}</span>
-          <span class="badge ${item.cls}">${item.value}%</span>
-        </li>
-      `).join("");
-    }
+  const max = entries[0][1] || 1;
 
-    function updateTopThreats(){
-      if(activityLog.length === 0){
-        document.getElementById("topThreats").innerHTML = `
-          <li><span>Most targeted</span><span class="badge blue">United States</span></li>
-          <li><span>Most active source</span><span class="badge red">Russia</span></li>
-          <li><span>Dominant threat</span><span class="badge gold">Phishing</span></li>
-          <li><span>Events last 60s</span><span class="badge green">0</span></li>
-        `;
-        return;
-      }
+  container.innerHTML = entries.map(([label, value]) => `
+    <div class="data-row">
+      <div class="data-label">
+        <span class="flag-dot"></span>
+        ${label}
+      </div>
+      <div class="data-value">${value}</div>
+      <div class="bar">
+        <div style="width:${Math.max(4, (value / max) * 100)}%; background:${color}; box-shadow:0 0 18px ${color};"></div>
+      </div>
+    </div>
+  `).join("");
+}
 
-      const now = Date.now();
-      const last60s = activityLog.filter(item => now - item.timestamp < 60000);
+function updateSidebarStats(){
+  const attackerCounts = countBy("sourceCountry", item => activeFilter === "All" || item.type === activeFilter);
+  const targetCounts = countBy("targetCountry", item => activeFilter === "All" || item.type === activeFilter);
+  const typeCounts = countBy("type", item => activeFilter === "All" || item.type === activeFilter);
 
-      const targetCounts = {};
-      const sourceCounts = {};
-      const typeCounts = {};
+  const attackers = topEntries(attackerCounts, 5);
+  const targets = topEntries(targetCounts, 5);
+  const vectors = topEntries(typeCounts, 5);
 
-      activityLog.forEach(item => {
-        targetCounts[item.targetCountry] = (targetCounts[item.targetCountry] || 0) + 1;
-        sourceCounts[item.sourceCountry] = (sourceCounts[item.sourceCountry] || 0) + 1;
-        typeCounts[item.type] = (typeCounts[item.type] || 0) + 1;
-      });
+  renderBarList("attackersList", attackers, "rgba(32,215,255,0.75)");
+  renderBarList("targetsList", targets, "rgba(255,93,115,0.72)");
+  renderBarList("vectorsList", vectors, "rgba(255,213,96,0.72)");
+}
 
-      function findTop(obj){
-        let topKey = "—";
-        let topValue = -1;
-        for(const key in obj){
-          if(obj[key] > topValue){
-            topValue = obj[key];
-            topKey = key;
-          }
-        }
-        return topKey;
-      }
+function updateFeed(){
+  const feed = document.getElementById("recentFeed");
+  const filtered = activityLog.filter(item => activeFilter === "All" || item.type === activeFilter).slice(0, 7);
 
-      document.getElementById("topThreats").innerHTML = `
-        <li><span>Most targeted</span><span class="badge blue">${findTop(targetCounts)}</span></li>
-        <li><span>Most active source</span><span class="badge red">${findTop(sourceCounts)}</span></li>
-        <li><span>Dominant threat</span><span class="badge gold">${findTop(typeCounts)}</span></li>
-        <li><span>Events last 60s</span><span class="badge green">${last60s.length}</span></li>
-      `;
-    }
+  if(filtered.length === 0){
+    feed.innerHTML = `<div class="feed-item">Monitoring network activity...</div>`;
+    return;
+  }
 
-    function updateRecentFeed(){
-      const feed = document.getElementById("recentFeed");
+  feed.innerHTML = filtered.map(item => `
+    <div class="feed-item">
+      <span class="feed-time">${item.time}</span>
+      ${item.type} from ${item.sourceCountry} to ${item.targetCountry}
+      <span class="feed-meta">Risk: ${item.score}/100 • Impact: ${item.impact}</span>
+    </div>
+  `).join("");
+}
 
-      if(activityLog.length === 0){
-        feed.innerHTML = `<li>Monitoring network activity...</li>`;
-        return;
-      }
+function updateThreatLevel(){
+  const recent = activityLog.filter(item => Date.now() - item.timestamp < 20000).length;
+  const el = document.getElementById("threatLevel");
 
-      const latest = activityLog.slice(0, 6);
+  if(recent >= 14){
+    el.textContent = "High";
+  } else if(recent >= 7){
+    el.textContent = "Elevated";
+  } else {
+    el.textContent = "Moderate";
+  }
+}
 
-      feed.innerHTML = latest.map(item => `
-        <li>
-          <span class="feed-time">${item.time}</span>
-          ${item.type} from ${item.sourceCountry} to ${item.targetCountry}
-          <span class="feed-meta">Risk score: ${item.score}/100 • Impact: ${item.impact}</span>
-        </li>
-      `).join("");
-    }
+function updateTimelineText(){
+  const recent = activityLog.filter(item => Date.now() - item.timestamp < 60000 && (activeFilter === "All" || item.type === activeFilter));
+  const counts = countBy("type", item => Date.now() - item.timestamp < 60000 && (activeFilter === "All" || item.type === activeFilter));
+  const dominant = topEntries(counts, 1);
 
-    function updateThreatLevel(){
-      const value = document.getElementById("threatLevel");
-      const recent = activityLog.filter(item => Date.now() - item.timestamp < 20000).length;
+  document.getElementById("timelineEvents").textContent = `${recent.length} events last minute`;
+  document.getElementById("timelineDominant").textContent = `dominant threat: ${dominant[0] ? dominant[0][0] : "—"}`;
+  document.getElementById("timelineFocus").textContent = `mode: ${activeFilter.toLowerCase()}`;
+}
 
-      if(recent >= 10){
-        value.textContent = "High";
-      } else if(recent >= 5){
-        value.textContent = "Elevated";
-      } else {
-        value.textContent = "Moderate";
-      }
-    }
+function renderSpark(containerId, data, color){
+  const container = document.getElementById(containerId);
+  const width = container.clientWidth || 800;
+  const barW = Math.max(2, Math.floor(width / data.length) - 1);
 
-    capitals.forEach(function(c){
-      L.circleMarker([c[2], c[3]], {
-        radius:5,
-        color:"#8fa1b6",
-        fillColor:"#8fa1b6",
-        fillOpacity:1,
-        weight:1
+  container.innerHTML = data.map((value, index) => {
+    const left = (index * (barW + 1));
+    const h = Math.max(2, value);
+    return `<div class="spark-bar" style="left:${left}px; width:${barW}px; height:${h}px; background:${color}; box-shadow:0 0 10px ${color};"></div>`;
+  }).join("");
+}
+
+function updateSparks(){
+  renderSpark("spark1", sparkData1, "rgba(255,93,115,0.85)");
+  renderSpark("spark2", sparkData2, "rgba(255,213,96,0.82)");
+  renderSpark("spark3", sparkData3, "rgba(111,131,255,0.84)");
+}
+
+function pushSparkData(count, count2, count3){
+  sparkData1.push(count);
+  sparkData2.push(count2);
+  sparkData3.push(count3);
+  sparkData1.shift();
+  sparkData2.shift();
+  sparkData3.shift();
+  updateSparks();
+}
+
+function drawCapitals(){
+  capitals.forEach(c => {
+    const m = L.circleMarker([c[2], c[3]], {
+      radius:4.5,
+      color:"#35e0a1",
+      fillColor:"#35e0a1",
+      fillOpacity:0.95,
+      weight:1
+    }).addTo(map);
+
+    m.bindPopup(`<strong>${c[1]}</strong><br>${c[0]}`);
+  });
+}
+
+function drawRegionLabels(){
+  const labels = [
+    { name:"North America", lat:47, lng:-103 },
+    { name:"Europe", lat:50, lng:17 },
+    { name:"Africa", lat:5, lng:18 },
+    { name:"Asia", lat:37, lng:87 },
+    { name:"South America", lat:-19, lng:-58 },
+    { name:"Oceania", lat:-27, lng:137 }
+  ];
+
+  labels.forEach(item => {
+    L.marker([item.lat, item.lng], {
+      interactive:false,
+      icon:L.divIcon({
+        className:"custom-region-label",
+        html:`<div>${item.name}</div>`
       })
-      .addTo(map)
-      .bindPopup(`<strong>${c[1]}</strong><br>${c[0]}`);
-    });
+    }).addTo(map);
+  });
+}
 
-    const regionLabels = [
-      { name:"North America", lat:47, lng:-102 },
-      { name:"Europe", lat:48, lng:17 },
-      { name:"Africa", lat:4, lng:18 },
-      { name:"Asia", lat:36, lng:88 },
-      { name:"South America", lat:-19, lng:-58 },
-      { name:"Oceania", lat:-28, lng:137 }
-    ];
+function makeNode(lat, lng, colorMain, colorSoft, radius1, radius2){
+  const outer = L.circle([lat, lng], {
+    radius:radius1,
+    color:colorMain,
+    fillColor:colorMain,
+    fillOpacity:0.08,
+    weight:1
+  }).addTo(map);
 
-    regionLabels.forEach(item => {
-      L.marker([item.lat, item.lng], {
-        interactive:false,
-        icon:L.divIcon({
-          className:"custom-region-label",
-          html:`<div>${item.name}</div>`
-        })
-      }).addTo(map);
-    });
+  const inner = L.circle([lat, lng], {
+    radius:radius2,
+    color:colorMain,
+    fillColor:colorMain,
+    fillOpacity:0.24,
+    weight:1.2
+  }).addTo(map);
 
-    const resetButton = L.control({ position:"bottomleft" });
+  return { outer, inner };
+}
 
-    resetButton.onAdd = function(){
-      const div = L.DomUtil.create("div", "reset-wrapper");
-      div.innerHTML = `<button class="reset-control" title="Reset world view">🌍</button>`;
+function createAttack(typeOverride = null){
+  if(isPaused) return null;
 
-      const button = div.querySelector("button");
-      L.DomEvent.disableClickPropagation(div);
-      L.DomEvent.on(button, "click", function(){
-        resetWorldView();
-      });
+  const source = random(capitals);
+  let target = random(capitals);
 
-      return div;
-    };
+  while(source === target){
+    target = random(capitals);
+  }
 
-    resetButton.addTo(map);
+  const type = typeOverride || random(attackTypes);
 
-    setTimeout(function(){
-      const resetContainer = document.querySelector(".reset-wrapper")?.closest(".leaflet-control");
-      if(resetContainer){
-        resetContainer.classList.add("reset-parent");
-      }
-    }, 0);
+  if(activeFilter !== "All" && type !== activeFilter){
+    return null;
+  }
 
-    function resetWorldView(){
-      map.setView(WORLD_VIEW.center, WORLD_VIEW.zoom);
+  const score = randomInt(58, 98);
+  const colorSet = attackColors[type];
+  const impacts = {
+    "DDoS":"Service disruption",
+    "Malware":"System compromise",
+    "Phishing":"Credential theft",
+    "Ransomware":"Operational disruption",
+    "Brute Force":"Unauthorized access attempts"
+  };
 
-      if(selectedCountryLayer){
-        selectedCountryLayer.setStyle(defaultStyle());
-        selectedCountryLayer = null;
-      }
-
-      selectedCountryName = null;
-      updateSidebar(null);
-      document.getElementById("focusAllBtn").classList.add("active");
+  const line = L.polyline(
+    [[source[2], source[3]], [target[2], target[3]]],
+    {
+      color:colorSet.main,
+      weight:1.6,
+      opacity:0.56,
+      dashArray:"3 8"
     }
+  ).addTo(map);
 
-    function createPulseCircle(lat, lng, options){
-      const circle = L.circle([lat, lng], options).addTo(map);
+  const src = makeNode(source[2], source[3], colorSet.main, colorSet.soft, 260000, 145000);
+  const dst = makeNode(target[2], target[3], "#20d7ff", "rgba(32,215,255,0.22)", 220000, 120000);
 
-      const el = circle.getElement ? circle.getElement() : null;
-      if(el){
-        el.classList.add("pulse-marker");
-      }
+  liveEvents++;
+  document.getElementById("liveEvents").textContent = liveEvents;
 
-      return circle;
-    }
+  const now = new Date();
 
-    function attack(){
-      if(isPaused) return;
+  activityLog.unshift({
+    sourceCountry:source[0],
+    targetCountry:target[0],
+    sourceCity:source[1],
+    targetCity:target[1],
+    type:type,
+    score:score,
+    impact:impacts[type],
+    time:formatTime(now),
+    timestamp:now.getTime()
+  });
 
-      const source = random(capitals);
-      let target = random(capitals);
+  if(activityLog.length > 120){
+    activityLog = activityLog.slice(0, 120);
+  }
 
-      while(source === target){
-        target = random(capitals);
-      }
+  if(selectedCountryName && (selectedCountryName === source[0] || selectedCountryName === target[0])){
+    updateFocusPanel(selectedCountryName);
+  }
 
-      const type = random(attackTypes);
-      const score = randomInt(55, 98);
-      const impacts = {
-        "DDoS":"Service disruption",
-        "Malware":"System compromise",
-        "Phishing":"Credential theft",
-        "Ransomware":"Operational disruption",
-        "Brute Force":"Unauthorized access attempts"
-      };
+  setTimeout(() => {
+    if(map.hasLayer(line)) map.removeLayer(line);
+    if(map.hasLayer(src.outer)) map.removeLayer(src.outer);
+    if(map.hasLayer(src.inner)) map.removeLayer(src.inner);
+    if(map.hasLayer(dst.outer)) map.removeLayer(dst.outer);
+    if(map.hasLayer(dst.inner)) map.removeLayer(dst.inner);
+  }, randomInt(1700, 2600));
 
-      const line = L.polyline(
-        [[source[2], source[3]], [target[2], target[3]]],
-        {
-          color:"#456b93",
-          weight:2.5,
-          opacity:0.9,
-          dashArray:"4 6"
+  return type;
+}
+
+function trafficBurst(){
+  if(isPaused) return;
+
+  let burst = randomInt(2, 5);
+  if(activeFilter !== "All") burst = randomInt(2, 4);
+
+  let countA = 0;
+  let countB = 0;
+  let countC = 0;
+
+  for(let i = 0; i < burst; i++){
+    const type = activeFilter === "All" ? null : activeFilter;
+    const produced = createAttack(type);
+
+    if(produced === "Malware" || produced === "Ransomware") countA += randomInt(6, 24);
+    if(produced === "DDoS") countB += randomInt(10, 28);
+    if(produced === "Phishing" || produced === "Brute Force") countC += randomInt(4, 18);
+  }
+
+  countA += randomInt(0, 8);
+  countB += randomInt(0, 10);
+  countC += randomInt(0, 6);
+
+  pushSparkData(countA, countB, countC);
+  updateThreatLevel();
+  updateSidebarStats();
+  updateFeed();
+  updateTimelineText();
+}
+
+function resetWorldView(){
+  map.setView(WORLD_VIEW.center, WORLD_VIEW.zoom);
+
+  if(selectedCountryLayer){
+    selectedCountryLayer.setStyle(defaultStyle());
+    selectedCountryLayer = null;
+  }
+
+  selectedCountryName = null;
+  updateFocusPanel(null);
+  document.getElementById("globalBtn").classList.add("active");
+}
+
+function initCountryLayer(){
+  fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json")
+    .then(res => res.json())
+    .then(data => {
+      geoLayer = L.geoJSON(data, {
+        style:defaultStyle,
+        onEachFeature:function(feature, layer){
+          const countryName = feature.properties.name || "Unknown";
+
+          layer.on("mouseover", function(){
+            if(layer !== selectedCountryLayer){
+              layer.setStyle(hoverStyle());
+            }
+          });
+
+          layer.on("mouseout", function(){
+            if(layer !== selectedCountryLayer){
+              layer.setStyle(defaultStyle());
+            }
+          });
+
+          layer.on("click", function(){
+            if(selectedCountryLayer){
+              selectedCountryLayer.setStyle(defaultStyle());
+            }
+
+            selectedCountryLayer = layer;
+            selectedCountryName = countryName;
+            layer.setStyle(selectedStyle());
+
+            map.fitBounds(layer.getBounds(), {
+              maxZoom:4.5,
+              padding:[30, 30]
+            });
+
+            document.getElementById("globalBtn").classList.remove("active");
+            updateFocusPanel(countryName);
+          });
         }
-      ).addTo(map);
-
-      const sourceOuter = L.circle([source[2], source[3]], {
-        radius:240000,
-        color:"#c76666",
-        fillColor:"#c76666",
-        fillOpacity:0.10,
-        weight:1
       }).addTo(map);
-
-      const sourceBubble = L.circle([source[2], source[3]], {
-        radius:150000,
-        color:"#c76666",
-        fillColor:"#c76666",
-        fillOpacity:0.34,
-        weight:1.2
-      }).addTo(map);
-
-      const targetOuter = L.circle([target[2], target[3]], {
-        radius:220000,
-        color:"#456b93",
-        fillColor:"#456b93",
-        fillOpacity:0.10,
-        weight:1
-      }).addTo(map);
-
-      const targetBubble = L.circle([target[2], target[3]], {
-        radius:135000,
-        color:"#456b93",
-        fillColor:"#456b93",
-        fillOpacity:0.34,
-        weight:1.2
-      }).addTo(map);
-
-      sourceBubble.bindPopup("Attack source");
-      targetBubble.bindPopup("Target endpoint");
-
-      liveEvents++;
-      document.getElementById("liveEvents").textContent = liveEvents;
-
-      const now = new Date();
-
-      activityLog.unshift({
-        sourceCountry:source[0],
-        targetCountry:target[0],
-        type:type,
-        score:score,
-        impact:impacts[type],
-        time:formatTime(now),
-        timestamp:now.getTime()
-      });
-
-      if(activityLog.length > 40){
-        activityLog = activityLog.slice(0, 40);
-      }
-
-      updateRecentFeed();
-      updateTopThreats();
-      updateThreatLevel();
-
-      if(selectedCountryName && (selectedCountryName === source[0] || selectedCountryName === target[0])){
-        updateSidebar(selectedCountryName);
-      }
-
-      setTimeout(function(){
-        if(map.hasLayer(line)) map.removeLayer(line);
-        if(map.hasLayer(sourceOuter)) map.removeLayer(sourceOuter);
-        if(map.hasLayer(sourceBubble)) map.removeLayer(sourceBubble);
-        if(map.hasLayer(targetOuter)) map.removeLayer(targetOuter);
-        if(map.hasLayer(targetBubble)) map.removeLayer(targetBubble);
-      }, 1900);
-    }
-
-    function startEvents(){
-      if(eventTimer) clearInterval(eventTimer);
-      eventTimer = setInterval(attack, 1200);
-    }
-
-    document.getElementById("pauseBtn").addEventListener("click", function(){
-      isPaused = !isPaused;
-      this.textContent = isPaused ? "Resume events" : "Pause events";
-      this.classList.toggle("active", isPaused);
     });
+}
 
-    document.getElementById("focusAllBtn").addEventListener("click", function(){
-      resetWorldView();
-    });
+function startTraffic(){
+  if(eventTimer) clearInterval(eventTimer);
+  eventTimer = setInterval(trafficBurst, 900);
 
-    document.getElementById("themeBtn").addEventListener("click", function(){
-      contrastMode = !contrastMode;
-      document.body.style.filter = contrastMode ? "contrast(1.05) saturate(0.98)" : "none";
-      this.classList.toggle("active", contrastMode);
-    });
-
-    fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json")
-      .then(res => res.json())
-      .then(data => {
-        geoLayer = L.geoJSON(data, {
-          style:defaultStyle,
-          onEachFeature:function(feature, layer){
-            const countryName = feature.properties.name || "Unknown";
-
-            layer.on("mouseover", function(){
-              if(layer !== selectedCountryLayer){
-                layer.setStyle(hoverStyle());
-              }
-            });
-
-            layer.on("mouseout", function(){
-              if(layer !== selectedCountryLayer){
-                layer.setStyle(defaultStyle());
-              }
-            });
-
-            layer.on("click", function(){
-              if(selectedCountryLayer){
-                selectedCountryLayer.setStyle(defaultStyle());
-              }
-
-              layer.setStyle(selectedStyle());
-              selectedCountryLayer = layer;
-              selectedCountryName = countryName;
-
-              map.fitBounds(layer.getBounds(), {
-                maxZoom:4.25,
-                padding:[30, 30]
-              });
-
-              document.getElementById("focusAllBtn").classList.remove("active");
-              updateSidebar(countryName);
-            });
-          }
-        }).addTo(map);
-      });
-
-    map.on("moveend", function(){
-      if(!geoLayer) return;
-      geoLayer.eachLayer(function(layer){
-        if(layer !== selectedCountryLayer){
-          layer.setStyle(defaultStyle());
-        }
-      });
-    });
-
-    document.getElementById("countryCount").textContent = capitals.length;
-    updateSidebar(null);
-    updateRecentFeed();
-    updateTopThreats();
+  if(statsTimer) clearInterval(statsTimer);
+  statsTimer = setInterval(() => {
     updateThreatLevel();
-    startEvents();
-  </script>
+    updateSidebarStats();
+    updateFeed();
+    updateTimelineText();
+  }, 2000);
+}
+
+document.getElementById("pauseBtn").addEventListener("click", function(){
+  isPaused = !isPaused;
+  this.textContent = isPaused ? "Resume events" : "Pause events";
+  this.classList.toggle("active", isPaused);
+});
+
+document.getElementById("globalBtn").addEventListener("click", function(){
+  resetWorldView();
+});
+
+document.getElementById("contrastBtn").addEventListener("click", function(){
+  contrastMode = !contrastMode;
+  document.body.style.filter = contrastMode ? "contrast(1.08) saturate(1.06)" : "none";
+  this.classList.toggle("active", contrastMode);
+});
+
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    this.classList.add("active");
+    activeFilter = this.dataset.filter;
+    document.getElementById("attackMode").textContent = activeFilter;
+    updateSidebarStats();
+    updateFeed();
+    updateTimelineText();
+  });
+});
+
+window.addEventListener("resize", updateSparks);
+
+drawCapitals();
+drawRegionLabels();
+initCountryLayer();
+updateFocusPanel(null);
+updateSidebarStats();
+updateFeed();
+updateTimelineText();
+updateSparks();
+document.getElementById("countryCount").textContent = capitals.length;
+startTraffic();
+
+for(let i = 0; i < 16; i++){
+  pushSparkData(randomInt(1, 14), randomInt(4, 24), randomInt(1, 12));
+}
+</script>
 </body>
 </html>
